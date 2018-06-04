@@ -898,7 +898,7 @@ public class JettyServer implements NiFiServer {
             }
 
             // ensure the web document war was loaded and provide the extension mapping
-                if (webDocsContext != null) {
+            if (webDocsContext != null) {
                 final ServletContext webDocsServletContext = webDocsContext.getServletHandler().getServletContext();
                 webDocsServletContext.setAttribute("nifi-extension-mapping", extensionMapping);
             }
