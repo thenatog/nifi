@@ -81,7 +81,6 @@ import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -98,6 +97,7 @@ import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.JettyWebXmlConfiguration;
 import org.eclipse.jetty.webapp.WebAppClassLoader;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -336,11 +336,10 @@ public class JettyServer implements NiFiServer {
         // load the documentation war
         webDocsContext = loadWar(webDocsWar, docsContextPath, frameworkClassLoader);
 
-        // overlay the actual documentation
-        final ContextHandlerCollection documentationHandlers = new ContextHandlerCollection();
-        documentationHandlers.addHandler(createDocsWebApp(docsContextPath));
-        documentationHandlers.addHandler(webDocsContext);
-        handlers.addHandler(documentationHandlers);
+        // add the servlets which serve the HTML documentation within the documentation web app
+        addDocsServlets(webDocsContext);
+
+        handlers.addHandler(webDocsContext);
 
         // load the web error app
         final WebAppContext webErrorContext = loadWar(webErrorWar, "/", frameworkClassLoader);
@@ -516,8 +515,10 @@ public class JettyServer implements NiFiServer {
         return webappContext;
     }
 
-    private ContextHandler createDocsWebApp(final String contextPath) {
+    private void addDocsServlets(WebAppContext docsContext) {
         try {
+
+            // Load the nifi/docs directory
             final File docsDir = getDocsDir("docs");
             final Resource docsResource = Resource.newResource(docsDir);
 
@@ -526,35 +527,37 @@ public class JettyServer implements NiFiServer {
             final File workingDocsDirectory = getWorkingDocsDirectory(componentDocsDirPath);
             final Resource workingDocsResource = Resource.newResource(workingDocsDirectory);
 
+            // Load the API docs
             final File webApiDocsDir = getWebApiDocsDir();
             final Resource webApiDocsResource = Resource.newResource(webApiDocsDir);
 
-            // Create resources for all docs locations
-            final ResourceCollection resources = new ResourceCollection(docsResource, workingDocsResource, webApiDocsResource);
+            // Create the servlet which will serve the static resources
+            ServletHolder defaultHolder = new ServletHolder("default", DefaultServlet.class);
+            defaultHolder.setInitParameter("dirAllowed", "false");
 
+            ServletHolder docs = new ServletHolder("docs", DefaultServlet.class);
+            docs.setInitParameter("resourceBase", docsResource.getURI().toString());
 
-            // The below ServletContext and Servlet API usage was derived from https://stackoverflow.com/a/34277268.
-            // Thanks go to Stack Overflow user Joakim Erdfelt.
+            ServletHolder components = new ServletHolder("components", DefaultServlet.class);
+            components.setInitParameter("resourceBase", workingDocsResource.getURI().toString());
 
-            // We create a servlet context handler to encapsulate the static docs resources we want served.
-            ServletContextHandler docsHandler = new ServletContextHandler();
-            docsHandler.setContextPath(contextPath);
-            docsHandler.setBaseResource(resources);
-            docsHandler.addFilter(new FilterHolder(FRAME_OPTIONS_FILTER), "/*", EnumSet.allOf(DispatcherType.class));
+            ServletHolder restApi = new ServletHolder("rest-api", DefaultServlet.class);
+            restApi.setInitParameter("resourceBase", webApiDocsResource.getURI().toString());
 
-            // This default servlet actually serves the static docs resources.
-            ServletHolder defaultServlet = new ServletHolder("default", DefaultServlet.class);
-            defaultServlet.setInitParameter("dirAllowed", "false"); //should this be set to false? org.eclipse.jetty.servlet.Default.dirAllowed = false
-            docsHandler.addServlet(defaultServlet, "/");
+            docsContext.addServlet(docs, "/html/*");
+            docsContext.addServlet(components, "/components/*");
+            docsContext.addServlet(restApi, "/rest-api/*");
 
-            logger.info("Loading documents web app with context path set to " + contextPath);
-            return docsHandler;
+            docsContext.addServlet(defaultHolder, "/");
+
+            logger.info("Loading documents web app with context path set to " + docsContext.getContextPath());
+
         } catch (Exception ex) {
             logger.error("Unhandled Exception in createDocsWebApp: " + ex.getMessage());
             startUpFailure(ex);
-            return null;    // required by compiler, though never be executed.
         }
     }
+
 
     /**
      * Returns a File object for the directory containing NIFI documentation.
