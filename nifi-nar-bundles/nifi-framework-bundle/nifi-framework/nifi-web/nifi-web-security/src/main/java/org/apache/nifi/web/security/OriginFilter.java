@@ -23,7 +23,6 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import javax.servlet.Filter;
 import javax.servlet.FilterConfig;
@@ -42,40 +41,27 @@ public class OriginFilter implements Filter {
     public void doFilter(final ServletRequest req, final ServletResponse resp, final FilterChain filterChain)
             throws IOException, ServletException {
 
-
         HttpServletRequest httpReq = (HttpServletRequest) req;
-        String sourceOrigin = httpReq.getHeader("Origin");
+        String sourceOrigin;
+
+        // Check the request's Origin header, otherwise check the Referer
+        if(httpReq.getHeader("Origin") != null)  {
+            sourceOrigin = httpReq.getHeader("Origin");
+        } else {
+            sourceOrigin = httpReq.getHeader("Referer");
+        }
 
         if(sourceOrigin != null && targetOrigin != null) {
             // Target and Source Origins match so we can continue with the filter chain
-            if(sourceOrigin.equalsIgnoreCase(targetOrigin)) {
+            if(sourceOrigin.toLowerCase().startsWith(targetOrigin.toLowerCase())) {
                 filterChain.doFilter(req, resp);
             } else {
                 // Should this be a BadRequestException or simply a ServletException?
                 throw new BadRequestException("The request's Origin header did not match the server's (target) Origin");
             }
         } else {
-            throw new BadRequestException("The request's Origin header was null");
+            throw new BadRequestException("The request's Origin and Referer headers were null");
         }
-
-//        try {
-//
-//        } catch (RequestRejectedException e) {
-//            if (logger.isDebugEnabled()) {
-//                logger.debug("An exception was caught performing the HTTP request security filter check and the stacktrace has been suppressed from the response");
-//            }
-//
-//            HttpServletResponse filteredResponse = (HttpServletResponse) resp;
-//            filteredResponse.setStatus(500);
-//            filteredResponse.getWriter().write(e.getMessage());
-//
-//            StringWriter sw = new StringWriter();
-//            sw.write("Exception caught by ExceptionFilter:\n");
-//            PrintWriter pw = new PrintWriter(sw);
-//            e.printStackTrace(pw);
-//            logger.error(sw.toString());
-//        }
-
     }
 
     @Override

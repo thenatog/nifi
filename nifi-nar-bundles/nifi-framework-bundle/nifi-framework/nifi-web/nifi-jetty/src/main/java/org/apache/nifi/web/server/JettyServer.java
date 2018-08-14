@@ -24,6 +24,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.nio.file.Paths;
@@ -331,7 +332,7 @@ public class JettyServer implements NiFiServer {
         webUiContext.getInitParams().put("knox-supported", String.valueOf(props.isKnoxSsoEnabled()));
         handlers.addHandler(webUiContext);
 
-        String jettyOrigin = getOriginFromServer(server);
+        String jettyOrigin = getOrigin(props);
         // The OriginFilter ensures that the request's Source Origin matches the Target Origin
         FilterHolder originFilter = new FilterHolder(new OriginFilter());
         originFilter.setInitParameter("JETTY_ORIGIN", jettyOrigin);
@@ -1021,37 +1022,18 @@ public class JettyServer implements NiFiServer {
     }
 
 
-//
-//    private String getOriginFromProperties(NiFiProperties props) {
-//        // Check is secure then get the appropriate attributes
-//        String scheme;
-//        String host;
-//        int port = props.getConfiguredHttpOrHttpsPort();
-//
-//        if(props.isHTTPSConfigured()) {
-//            host =
-//            port = props.getSslPort();
-//        }
-//        String jettyOrigin =
-//                .toString().replaceAll("/$", "");
-//        int port = 0;
-//        if(server.getConnectors().length == 1) {
-//            port = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
-//        }
-//        return jettyOrigin + ":" + String.valueOf(port);
-//    }
-//
+    public static String getOrigin(NiFiProperties props) {
 
-    private String getOriginFromServer(NiFiProperties props) {
+        InetSocketAddress socket = props.getNodeApiAddress();
 
-        StringBuffer origin = new StringBuffer();
-        origin.append(server.getURI().getScheme());
-        origin.append("://");
-        origin.append(server.getURI().getHost());
-        origin.append(":");
-        origin.append(String.valueOf(props.getSslPort()));
+        String scheme;
+        if(props.isHTTPSConfigured()) {
+            scheme = "https://";
+        } else {
+            scheme = "http://";
+        }
 
-        return origin.toString();
+        return scheme + socket.toString();
     }
 
     private static final CrossOriginFilter CROSS_ORIGIN_FILTER = new CrossOriginFilter();
