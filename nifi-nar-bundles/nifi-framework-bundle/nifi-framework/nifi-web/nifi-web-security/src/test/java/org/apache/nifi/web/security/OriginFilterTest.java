@@ -16,37 +16,22 @@
  */
 package org.apache.nifi.web.security;
 
-import org.apache.nifi.authorization.Authorizer;
-import org.apache.nifi.authorization.util.IdentityMapping;
-import org.apache.nifi.util.NiFiProperties;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.mock.web.MockHttpServletResponse;
 
-import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import java.io.IOException;
-import java.util.List;
-import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
-import org.springframework.mock.web.MockHttpServletResponse;
-
-import org.eclipse.jetty.servlet.FilterHolder;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
 public class OriginFilterTest {
@@ -168,5 +153,119 @@ public class OriginFilterTest {
         // BadRequestException should be thrown
     }
 
+    @Test
+    public void testMatchingSourceReferrerAndTargetOrigin() throws ServletException, IOException {
+        // Arrange
+
+        // OriginFilter
+        FilterHolder originFilter = new FilterHolder(new OriginFilter());
+
+        // Set up request
+        HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(mockRequest.getRequestURI()).thenReturn("/");
+        Mockito.when(mockRequest.getHeader("Referer")).thenReturn("http://localhost:8080/nifi");
+
+        MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+        FilterChain mockFilterChain = Mockito.mock(FilterChain.class);
+        ServletContext mockContext = Mockito.mock(ServletContext.class);
+
+        // Set up filter config
+        FilterConfig mockFilterConfig = Mockito.mock(FilterConfig.class);
+        when(mockFilterConfig.getInitParameter("JETTY_ORIGIN")).thenReturn("http://localhost:8080");
+        when(mockFilterConfig.getServletContext()).thenReturn(mockContext);
+        originFilter.getFilter().init(mockFilterConfig);
+
+        // Action
+        originFilter.getFilter().doFilter(mockRequest, mockResponse, mockFilterChain);
+
+        // Verify
+        verify(mockFilterChain, times(1)).doFilter(mockRequest, mockResponse);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testNonMatchingSourceReferrerDomainAndTargetOrigin() throws ServletException, IOException {
+        // Arrange
+
+        // OriginFilter
+        FilterHolder originFilter = new FilterHolder(new OriginFilter());
+
+        // Set up request
+        HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(mockRequest.getRequestURI()).thenReturn("/");
+        Mockito.when(mockRequest.getHeader("Referer")).thenReturn("http://nifi.com:8080/nifi");
+
+        MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+        FilterChain mockFilterChain = Mockito.mock(FilterChain.class);
+        ServletContext mockContext = Mockito.mock(ServletContext.class);
+
+        // Set up filter config
+        FilterConfig mockFilterConfig = Mockito.mock(FilterConfig.class);
+        when(mockFilterConfig.getInitParameter("JETTY_ORIGIN")).thenReturn("http://localhost:8080");
+        when(mockFilterConfig.getServletContext()).thenReturn(mockContext);
+        originFilter.getFilter().init(mockFilterConfig);
+
+        // Action
+        originFilter.getFilter().doFilter(mockRequest, mockResponse, mockFilterChain);
+
+        // Verify
+        verify(mockFilterChain, times(1)).doFilter(mockRequest, mockResponse);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testNonMatchingSourceReferrerSchemeAndTargetOrigin() throws ServletException, IOException {
+        // Arrange
+
+        // OriginFilter
+        FilterHolder originFilter = new FilterHolder(new OriginFilter());
+
+        // Set up request
+        HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(mockRequest.getRequestURI()).thenReturn("/");
+        Mockito.when(mockRequest.getHeader("Referer")).thenReturn("https://localhost:8080/nifi");
+
+        MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+        FilterChain mockFilterChain = Mockito.mock(FilterChain.class);
+        ServletContext mockContext = Mockito.mock(ServletContext.class);
+
+        // Set up filter config
+        FilterConfig mockFilterConfig = Mockito.mock(FilterConfig.class);
+        when(mockFilterConfig.getInitParameter("JETTY_ORIGIN")).thenReturn("http://localhost:8080");
+        when(mockFilterConfig.getServletContext()).thenReturn(mockContext);
+        originFilter.getFilter().init(mockFilterConfig);
+
+        // Action
+        originFilter.getFilter().doFilter(mockRequest, mockResponse, mockFilterChain);
+
+        // Verify
+        verify(mockFilterChain, times(1)).doFilter(mockRequest, mockResponse);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void testSourceOriginNullAndSourceRefererNull() throws ServletException, IOException {
+        // Arrange
+
+        // OriginFilter
+        FilterHolder originFilter = new FilterHolder(new OriginFilter());
+
+        // Set up request
+        HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(mockRequest.getRequestURI()).thenReturn("/");
+
+        MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+        FilterChain mockFilterChain = Mockito.mock(FilterChain.class);
+        ServletContext mockContext = Mockito.mock(ServletContext.class);
+
+        // Set up filter config
+        FilterConfig mockFilterConfig = Mockito.mock(FilterConfig.class);
+        when(mockFilterConfig.getInitParameter("JETTY_ORIGIN")).thenReturn("http://localhost:8080");
+        when(mockFilterConfig.getServletContext()).thenReturn(mockContext);
+        originFilter.getFilter().init(mockFilterConfig);
+
+        // Action
+        originFilter.getFilter().doFilter(mockRequest, mockResponse, mockFilterChain);
+
+        // Verify
+        verify(mockFilterChain, times(1)).doFilter(mockRequest, mockResponse);
+    }
 
 }

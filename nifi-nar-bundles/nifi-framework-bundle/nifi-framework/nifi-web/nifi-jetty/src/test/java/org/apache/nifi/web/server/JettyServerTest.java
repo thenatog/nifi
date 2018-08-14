@@ -45,6 +45,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class JettyServerTest {
+
+    String HOST = "nifi.com";
+    String PORT = "9443";
+
     @Test
     public void testConfigureSslContextFactoryWithKeystorePasswordAndKeyPassword() {
         // Expect that if we set both passwords, KeyStore password is used for KeyStore, Key password is used for Key Manager
@@ -178,5 +182,30 @@ public class JettyServerTest {
         filter.doFilter(mockRequest, mockResponse, mockFilterChain);
 
         assertEquals(1, mockResponse.getHeaders("X-Frame-Options").size());
+    }
+
+    @Test
+    public void testGetOriginSecure() {
+        final Map<String, String> addProps = new HashMap<>();
+        addProps.put(NiFiProperties.CLUSTER_PROTOCOL_IS_SECURE, "true");
+        addProps.put(NiFiProperties.WEB_HTTPS_HOST, HOST);
+        addProps.put(NiFiProperties.WEB_HTTPS_PORT, PORT);
+        NiFiProperties nifiProperties = NiFiProperties.createBasicNiFiProperties(null, addProps);
+
+        String origin = JettyServer.getOrigin(nifiProperties);
+
+        assertEquals(origin, "https://nifi.com:9443");
+    }
+
+    @Test
+    public void testGetOriginInsecure() {
+        final Map<String, String> addProps = new HashMap<>();
+        addProps.put(NiFiProperties.WEB_HTTP_HOST, HOST);
+        addProps.put(NiFiProperties.WEB_HTTP_PORT, PORT);
+        NiFiProperties nifiProperties = NiFiProperties.createBasicNiFiProperties(null, addProps);
+
+        String origin = JettyServer.getOrigin(nifiProperties);
+
+        assertEquals(origin, "http://nifi.com:9443");
     }
 }
