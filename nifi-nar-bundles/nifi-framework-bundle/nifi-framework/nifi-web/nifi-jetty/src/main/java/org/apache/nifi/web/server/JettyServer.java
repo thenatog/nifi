@@ -74,6 +74,7 @@ import org.apache.nifi.util.NiFiProperties;
 import org.apache.nifi.web.ContentAccess;
 import org.apache.nifi.web.NiFiWebConfigurationContext;
 import org.apache.nifi.web.UiExtensionType;
+import org.apache.nifi.web.security.OriginFilter;
 import org.eclipse.jetty.annotations.AnnotationConfiguration;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
@@ -89,6 +90,7 @@ import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.Configuration;
@@ -175,7 +177,7 @@ public class JettyServer implements NiFiServer {
     /**
      * Instantiates this object but does not perform any configuration. Used for unit testing.
      */
-     JettyServer(Server server, NiFiProperties properties) {
+    JettyServer(Server server, NiFiProperties properties) {
         this.server = server;
         this.props = properties;
     }
@@ -319,8 +321,14 @@ public class JettyServer implements NiFiServer {
         webUiContext.getInitParams().put("whitelistedContextPaths", props.getWhitelistedContextPaths());
         handlers.addHandler(webUiContext);
 
+        String jettyOrigin = getOriginFromServer(server);
+        // The OriginFilter ensures that the request's Source Origin matches the Target Origin
+        FilterHolder originFilter = new FilterHolder(new OriginFilter());
+        originFilter.setInitParameter("JETTY_ORIGIN", jettyOrigin);
+
         // load the web api app
         webApiContext = loadWar(webApiWar, "/nifi-api", frameworkClassLoader);
+        webApiContext.addFilter(originFilter, "/*", EnumSet.allOf(DispatcherType.class));
         handlers.addHandler(webApiContext);
 
         // load the content viewer app
@@ -501,6 +509,19 @@ public class JettyServer implements NiFiServer {
 
         // add a filter to set the X-Frame-Options filter
         webappContext.addFilter(new FilterHolder(FRAME_OPTIONS_FILTER), "/*", EnumSet.allOf(DispatcherType.class));
+
+
+        //if (!props.getProperty(NiFiProperties.WEB_HTTPS_HOST).isEmpty())String hostname =;
+        HostHeaderHandler hostHeaderHandler = new HostHeaderHandler(props);
+        //String validHosts = "http://natog.com:8085";//hostHeaderHandler.printValidHosts();
+        String validHosts = "*";
+
+        // Apply CORS filter
+        FilterHolder corsFilter = new FilterHolder(CROSS_ORIGIN_FILTER);
+        corsFilter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, validHosts);
+
+        webappContext.addFilter(corsFilter, "/*", EnumSet.allOf(DispatcherType.class));
+
 
         try {
             // configure the class loader - webappClassLoader -> jetty nar -> web app's nar -> ...
@@ -1026,6 +1047,44 @@ public class JettyServer implements NiFiServer {
             logger.warn("Failed to stop web server", ex);
         }
     }
+
+
+//
+//    private String getOriginFromProperties(NiFiProperties props) {
+//        // Check is secure then get the appropriate attributes
+//        String scheme;
+//        String host;
+//        int port = props.getConfiguredHttpOrHttpsPort();
+//
+//        if(props.isHTTPSConfigured()) {
+//            host =
+//            port = props.getSslPort();
+//        }
+//        String jettyOrigin =
+//                .toString().replaceAll("/$", "");
+//        int port = 0;
+//        if(server.getConnectors().length == 1) {
+//            port = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
+//        }
+//        return jettyOrigin + ":" + String.valueOf(port);
+//    }
+//
+
+    private String getOriginFromServer(NiFiProperties props) {
+
+        StringBuffer origin = new StringBuffer();
+        origin.append(server.getURI().getScheme());
+        origin.append("://");
+        origin.append(server.getURI().getHost());
+        origin.append(":");
+        origin.append(String.valueOf(props.getSslPort()));
+
+        return origin.toString();
+    }
+
+    private static final CrossOriginFilter CROSS_ORIGIN_FILTER = new CrossOriginFilter();
+
+
 
     private static final Filter FRAME_OPTIONS_FILTER = new Filter() {
         private static final String FRAME_OPTIONS = "X-Frame-Options";
