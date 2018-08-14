@@ -16,11 +16,20 @@
  */
 package org.apache.nifi.web.util;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
@@ -28,11 +37,14 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.UriBuilderException;
 import org.apache.commons.lang3.StringUtils;
+
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.nifi.util.NiFiProperties;
+import com.google.common.base.Strings;
 
 /**
  * Common utilities related to web development.
@@ -240,5 +252,116 @@ public final class WebUtils {
         }
         return false;
     }
+
+    public static List<String> generateDefaultHostnames(NiFiProperties niFiProperties) {
+        List<String> validHosts = new ArrayList<>();
+        int serverPort = 0;
+
+        if (niFiProperties == null) {
+            logger.warn("NiFiProperties not configured; returning minimal default hostnames");
+        } else {
+            try {
+                serverPort = niFiProperties.getConfiguredHttpOrHttpsPort();
+            } catch (RuntimeException e) {
+                logger.warn("Cannot fully generate list of default hostnames because the server port is not configured in nifi.properties. Defaulting to port 0 for host header evaluation");
+            }
+
+            // Add any custom network interfaces
+            try {
+                final int lambdaPort = serverPort;
+                List<String> customIPs = extractIPsFromNetworkInterfaces(niFiProperties);
+                customIPs.stream().forEach(ip -> {
+                    validHosts.add(ip);
+                    validHosts.add(ip + ":" + lambdaPort);
+                });
+            } catch (final Exception e) {
+                logger.warn("Failed to determine custom network interfaces.", e);
+            }
+        }
+
+        // Sometimes the hostname is left empty but the port is always populated
+        validHosts.add("127.0.0.1");
+        validHosts.add("127.0.0.1:" + serverPort);
+        validHosts.add("localhost");
+        validHosts.add("localhost:" + serverPort);
+        validHosts.add("[::1]");
+        validHosts.add("[::1]:" + serverPort);
+
+        // Add the loopback and actual IP address and hostname used
+        try {
+            validHosts.add(InetAddress.getLoopbackAddress().getHostAddress().toLowerCase());
+            validHosts.add(InetAddress.getLoopbackAddress().getHostAddress().toLowerCase() + ":" + serverPort);
+
+            validHosts.add(InetAddress.getLocalHost().getHostName().toLowerCase());
+            validHosts.add(InetAddress.getLocalHost().getHostName().toLowerCase() + ":" + serverPort);
+
+            validHosts.add(InetAddress.getLocalHost().getHostAddress().toLowerCase());
+            validHosts.add(InetAddress.getLocalHost().getHostAddress().toLowerCase() + ":" + serverPort);
+        } catch (final Exception e) {
+            logger.warn("Failed to determine local hostname.", e);
+        }
+
+        // Dedupe but maintain order
+        final List<String> uniqueHosts = uniqueList(validHosts);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Determined {} valid default hostnames and IP addresses for incoming headers: {}", new Object[]{uniqueHosts.size(), StringUtils.join(uniqueHosts, ", ")});
+        }
+        return uniqueHosts;
+    }
+
+    /**
+     * Extracts the list of IP addresses from custom bound network interfaces. If both HTTPS and HTTP interfaces are
+     * defined and HTTPS is enabled, only HTTPS interfaces will be returned. If none are defined, an empty list will be
+     * returned.
+     *
+     * @param niFiProperties the NiFiProperties object
+     * @return the list of IP addresses
+     */
+    static List<String> extractIPsFromNetworkInterfaces(NiFiProperties niFiProperties) {
+        Map<String, String> networkInterfaces = niFiProperties.isHTTPSConfigured() ? niFiProperties.getHttpsNetworkInterfaces() : niFiProperties.getHttpNetworkInterfaces();
+        if (isNotDefined(networkInterfaces)) {
+            // No custom interfaces defined
+            return new ArrayList<>(0);
+        } else {
+            List<String> allIPAddresses = new ArrayList<>();
+            for (Map.Entry<String, String> entry : networkInterfaces.entrySet()) {
+                final String networkInterfaceName = entry.getValue();
+                try {
+                    NetworkInterface ni = NetworkInterface.getByName(networkInterfaceName);
+                    List<String> ipAddresses = Collections.list(ni.getInetAddresses()).stream().map(inetAddress -> inetAddress.getHostAddress().toLowerCase()).collect(Collectors.toList());
+                    logger.debug("Resolved the following IP addresses for network interface {}: {}", new Object[]{networkInterfaceName, StringUtils.join(ipAddresses, ", ")});
+                    allIPAddresses.addAll(ipAddresses);
+                } catch (SocketException e) {
+                    logger.warn("Cannot resolve network interface named " + networkInterfaceName);
+                }
+            }
+
+            // Dedupe while maintaining order
+            return uniqueList(allIPAddresses);
+        }
+    }
+
+    /**
+     * Returns a unique {@code List} of the elements maintaining the original order.
+     *
+     * @param duplicateList a list that may contain duplicate elements
+     * @return a list maintaining the original order which no longer contains duplicate elements
+     */
+    public static List<String> uniqueList(List<String> duplicateList) {
+        return new ArrayList<>(new LinkedHashSet<>(duplicateList));
+    }
+
+    /**
+     * Returns true if the provided map of properties and network interfaces is null, empty, or the actual definitions are empty.
+     *
+     * @param networkInterfaces the map of properties to bindings
+     *                          ({@code ["nifi.web.http.network.interface.first":"eth0"]})
+     * @return
+     */
+    static boolean isNotDefined(Map<String, String> networkInterfaces) {
+        return networkInterfaces == null || networkInterfaces.isEmpty() || networkInterfaces.values().stream().filter(value -> !Strings.isNullOrEmpty(value)).collect(Collectors.toList()).isEmpty();
+    }
+
+
 
 }

@@ -71,6 +71,7 @@ import org.apache.nifi.ui.extension.UiExtension;
 import org.apache.nifi.ui.extension.UiExtensionMapping;
 import org.apache.nifi.util.FormatUtils;
 import org.apache.nifi.util.NiFiProperties;
+import org.apache.nifi.web.util.WebUtils;
 import org.apache.nifi.web.ContentAccess;
 import org.apache.nifi.web.NiFiWebConfigurationContext;
 import org.apache.nifi.web.UiExtensionType;
@@ -321,7 +322,7 @@ public class JettyServer implements NiFiServer {
         webUiContext.getInitParams().put("whitelistedContextPaths", props.getWhitelistedContextPaths());
         handlers.addHandler(webUiContext);
 
-        String jettyOrigin = getOriginFromServer(server);
+        String jettyOrigin = WebUtils.getOrigin(props);
         // The OriginFilter ensures that the request's Source Origin matches the Target Origin
         FilterHolder originFilter = new FilterHolder(new OriginFilter());
         originFilter.setInitParameter("JETTY_ORIGIN", jettyOrigin);
@@ -1049,26 +1050,7 @@ public class JettyServer implements NiFiServer {
     }
 
 
-//
-//    private String getOriginFromProperties(NiFiProperties props) {
-//        // Check is secure then get the appropriate attributes
-//        String scheme;
-//        String host;
-//        int port = props.getConfiguredHttpOrHttpsPort();
-//
-//        if(props.isHTTPSConfigured()) {
-//            host =
-//            port = props.getSslPort();
-//        }
-//        String jettyOrigin =
-//                .toString().replaceAll("/$", "");
-//        int port = 0;
-//        if(server.getConnectors().length == 1) {
-//            port = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
-//        }
-//        return jettyOrigin + ":" + String.valueOf(port);
-//    }
-//
+
 
     private String getOriginFromServer(NiFiProperties props) {
 
