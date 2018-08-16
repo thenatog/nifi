@@ -322,14 +322,18 @@ public class JettyServer implements NiFiServer {
         webUiContext.getInitParams().put("whitelistedContextPaths", props.getWhitelistedContextPaths());
         handlers.addHandler(webUiContext);
 
-        String jettyOrigin = getOrigin(props);
-        // The OriginFilter ensures that the request's Source Origin matches the Target Origin
-        FilterHolder originFilter = new FilterHolder(new OriginFilter());
-        originFilter.setInitParameter("JETTY_ORIGIN", jettyOrigin);
 
         // load the web api app
         webApiContext = loadWar(webApiWar, "/nifi-api", frameworkClassLoader);
-        webApiContext.addFilter(originFilter, "/*", EnumSet.allOf(DispatcherType.class));
+
+        // The OriginFilter ensures that the request's Source Origin matches the Target Origin
+        if(props.isOriginFilterEnabled()) {
+            String jettyOrigin = getOrigin(props);
+            FilterHolder originFilter = new FilterHolder(new OriginFilter());
+            originFilter.setInitParameter("JETTY_ORIGIN", jettyOrigin);
+            webApiContext.addFilter(originFilter, "/*", EnumSet.allOf(DispatcherType.class));
+        }
+
         handlers.addHandler(webApiContext);
 
         // load the content viewer app
@@ -510,19 +514,6 @@ public class JettyServer implements NiFiServer {
 
         // add a filter to set the X-Frame-Options filter
         webappContext.addFilter(new FilterHolder(FRAME_OPTIONS_FILTER), "/*", EnumSet.allOf(DispatcherType.class));
-
-
-        //if (!props.getProperty(NiFiProperties.WEB_HTTPS_HOST).isEmpty())String hostname =;
-        HostHeaderHandler hostHeaderHandler = new HostHeaderHandler(props);
-        //String validHosts = "http://natog.com:8085";//hostHeaderHandler.printValidHosts();
-        String validHosts = "*";
-
-        // Apply CORS filter
-        FilterHolder corsFilter = new FilterHolder(CROSS_ORIGIN_FILTER);
-        corsFilter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, validHosts);
-
-        webappContext.addFilter(corsFilter, "/*", EnumSet.allOf(DispatcherType.class));
-
 
         try {
             // configure the class loader - webappClassLoader -> jetty nar -> web app's nar -> ...
@@ -1063,9 +1054,6 @@ public class JettyServer implements NiFiServer {
 
         return scheme + socket.toString();
     }
-
-    private static final CrossOriginFilter CROSS_ORIGIN_FILTER = new CrossOriginFilter();
-
 
 
     private static final Filter FRAME_OPTIONS_FILTER = new Filter() {
