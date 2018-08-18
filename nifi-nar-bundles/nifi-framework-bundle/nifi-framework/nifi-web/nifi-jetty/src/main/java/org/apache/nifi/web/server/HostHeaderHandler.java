@@ -259,14 +259,6 @@ public class HostHeaderHandler extends ScopedHandler {
         return sb.append("</ul>\n").toString();
     }
 
-    String hostnamesWithoutPorts() {
-        StringBuilder sb = new StringBuilder(", ");
-        for (String hostname : validHosts) {
-            sb.append(hostname);
-        }
-        return sb.toString();
-    }
-
     public static List<String> generateDefaultHostnames(NiFiProperties niFiProperties) {
         List<String> validHosts = new ArrayList<>();
         int serverPort = 0;

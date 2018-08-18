@@ -225,6 +225,8 @@ class JettyServerGroovyTest extends GroovyTestCase {
     }
 }
 
+
+
 class TestAppender extends AppenderSkeleton {
     static final List<LoggingEvent> events = new ArrayList<>()
 

@@ -20,7 +20,10 @@ package org.apache.nifi.web.server;
 import org.apache.nifi.security.util.KeystoreType;
 import org.apache.nifi.util.NiFiProperties;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.webapp.WebAppContext;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -39,15 +42,14 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class JettyServerTest {
-
-    String HOST = "nifi.com";
-    String PORT = "9443";
 
     @Test
     public void testConfigureSslContextFactoryWithKeystorePasswordAndKeyPassword() {
@@ -184,28 +186,32 @@ public class JettyServerTest {
         assertEquals(1, mockResponse.getHeaders("X-Frame-Options").size());
     }
 
-    @Test
-    public void testGetOriginSecure() {
+    @Test(expected=RuntimeException.class)
+    public void testOriginFilterEnabledWithoutHTTPSConfigured() {
         final Map<String, String> addProps = new HashMap<>();
-        addProps.put(NiFiProperties.CLUSTER_PROTOCOL_IS_SECURE, "true");
-        addProps.put(NiFiProperties.WEB_HTTPS_HOST, HOST);
-        addProps.put(NiFiProperties.WEB_HTTPS_PORT, PORT);
+        addProps.put(NiFiProperties.WEB_HTTP_PORT, "8080");
+        addProps.put(NiFiProperties.WEB_HTTP_HOST, "nifi.host.com");
+        addProps.put(NiFiProperties.SECURITY_ORIGIN_FILTER_ENABLED, "true");
         NiFiProperties nifiProperties = NiFiProperties.createBasicNiFiProperties(null, addProps);
+        WebAppContext mockContext = Mockito.mock(WebAppContext.class);
 
-        String origin = JettyServer.getOrigin(nifiProperties);
-
-        assertEquals(origin, "https://nifi.com:9443");
+        JettyServer jetty = new JettyServer(new Server() , nifiProperties);
+        jetty.configureOriginFilter(nifiProperties, mockContext);
     }
 
     @Test
-    public void testGetOriginInsecure() {
+    public void testOriginFilterEnabledWithHTTPSConfigured() {
         final Map<String, String> addProps = new HashMap<>();
-        addProps.put(NiFiProperties.WEB_HTTP_HOST, HOST);
-        addProps.put(NiFiProperties.WEB_HTTP_PORT, PORT);
+        addProps.put(NiFiProperties.WEB_HTTPS_PORT, "9443");
+        addProps.put(NiFiProperties.WEB_HTTPS_HOST, "secure.host.com");
+        addProps.put(NiFiProperties.CLUSTER_PROTOCOL_IS_SECURE, "true");
+        addProps.put(NiFiProperties.SECURITY_ORIGIN_FILTER_ENABLED, "true");
         NiFiProperties nifiProperties = NiFiProperties.createBasicNiFiProperties(null, addProps);
+        WebAppContext mockContext = Mockito.mock(WebAppContext.class);
 
-        String origin = JettyServer.getOrigin(nifiProperties);
+        JettyServer jetty = new JettyServer(new Server() , nifiProperties);
+        jetty.configureOriginFilter(nifiProperties, mockContext);
 
-        assertEquals(origin, "http://nifi.com:9443");
+        verify(mockContext, times(1)).addFilter(any(FilterHolder.class), any(), any());
     }
 }

@@ -91,7 +91,6 @@ import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.Configuration;
@@ -322,17 +321,10 @@ public class JettyServer implements NiFiServer {
         webUiContext.getInitParams().put("whitelistedContextPaths", props.getWhitelistedContextPaths());
         handlers.addHandler(webUiContext);
 
-
         // load the web api app
         webApiContext = loadWar(webApiWar, "/nifi-api", frameworkClassLoader);
 
-        // The OriginFilter ensures that the request's Source Origin matches the Target Origin
-        if(props.isOriginFilterEnabled()) {
-            String jettyOrigin = getOrigin(props);
-            FilterHolder originFilter = new FilterHolder(new OriginFilter());
-            originFilter.setInitParameter("JETTY_ORIGIN", jettyOrigin);
-            webApiContext.addFilter(originFilter, "/*", EnumSet.allOf(DispatcherType.class));
-        }
+        configureOriginFilter(props, webApiContext);
 
         handlers.addHandler(webApiContext);
 
@@ -1040,22 +1032,6 @@ public class JettyServer implements NiFiServer {
         }
     }
 
-
-    public static String getOrigin(NiFiProperties props) {
-
-        InetSocketAddress socket = props.getNodeApiAddress();
-
-        String scheme;
-        if(props.isHTTPSConfigured()) {
-            scheme = "https://";
-        } else {
-            scheme = "http://";
-        }
-
-        return scheme + socket.toString();
-    }
-
-
     private static final Filter FRAME_OPTIONS_FILTER = new Filter() {
         private static final String FRAME_OPTIONS = "X-Frame-Options";
         private static final String SAME_ORIGIN = "SAMEORIGIN";
@@ -1079,6 +1055,20 @@ public class JettyServer implements NiFiServer {
         public void destroy() {
         }
     };
+
+    void configureOriginFilter(NiFiProperties props, WebAppContext webApiContext) {
+        // The OriginFilter ensures that the request's Source Origin matches the Target Origin
+        if (props.isOriginFilterEnabled()) {
+            if (props.isHTTPSConfigured()) {
+                String jettyOrigin = "https://" + props.getNodeApiAddress().toString();
+                FilterHolder originFilter = new FilterHolder(new OriginFilter(jettyOrigin));
+                originFilter.setName("OriginFilter");
+                webApiContext.addFilter(originFilter, "/*", EnumSet.allOf(DispatcherType.class));
+            } else {
+                throw new RuntimeException("HTTPS must be configured in order to use the Origin Filter.");
+            }
+        }
+    }
 }
 
 @FunctionalInterface
