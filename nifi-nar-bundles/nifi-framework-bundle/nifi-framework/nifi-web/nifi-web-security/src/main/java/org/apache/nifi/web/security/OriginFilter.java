@@ -16,6 +16,7 @@
  */
 package org.apache.nifi.web.security;
 
+import org.apache.nifi.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.servlet.FilterChain;
@@ -26,48 +27,51 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import javax.servlet.Filter;
 import javax.servlet.FilterConfig;
-import javax.ws.rs.BadRequestException;
+import javax.servlet.http.HttpServletResponse;
 
 /**
- * A filter to ensure that source origin and target origins match.
- *
+ * A filter to ensure that source origin and target origins match. The request Origin and Referer HTTP headers will be used
+ * as the source origin, and the combined value of the scheme (https), nifi.web.https.host and nifi.web.https.port
+ * properties will be used as the target origin.
  */
 public class OriginFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(OriginFilter.class);
     private String targetOrigin;
 
+    public OriginFilter(String origin) {
+        targetOrigin = origin;
+    }
+
     @Override
     public void doFilter(final ServletRequest req, final ServletResponse resp, final FilterChain filterChain)
             throws IOException, ServletException {
 
         HttpServletRequest httpReq = (HttpServletRequest) req;
+        HttpServletResponse httpResp = (HttpServletResponse) resp;
         String sourceOrigin;
 
         // Check the request's Origin header, otherwise check the Referer
-        if(httpReq.getHeader("Origin") != null)  {
+        if(!StringUtils.isBlank(httpReq.getHeader("Origin"))) {
             sourceOrigin = httpReq.getHeader("Origin");
         } else {
             sourceOrigin = httpReq.getHeader("Referer");
         }
 
-        if(sourceOrigin != null && targetOrigin != null) {
+        if(!StringUtils.isBlank(sourceOrigin ) && !StringUtils.isBlank(targetOrigin)) {
             // Target and Source Origins match so we can continue with the filter chain
             if(sourceOrigin.toLowerCase().startsWith(targetOrigin.toLowerCase())) {
                 filterChain.doFilter(req, resp);
             } else {
-                // Should this be a BadRequestException or simply a ServletException?
-                throw new BadRequestException("The request's Origin header did not match the server's (target) Origin");
+                httpResp.sendError(HttpServletResponse.SC_FORBIDDEN, "The request's (source) Origin header did not match the server's (target) Origin.");
             }
         } else {
-            throw new BadRequestException("The request's Origin and Referer headers were null");
+            httpResp.sendError(HttpServletResponse.SC_FORBIDDEN, "The request's Origin and Referer headers were null.");
         }
     }
 
     @Override
     public void init(final FilterConfig config) {
-        targetOrigin = config.getInitParameter("JETTY_ORIGIN");
-
     }
 
     @Override
