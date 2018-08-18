@@ -436,9 +436,10 @@ public abstract class NiFiProperties {
     }
 
     /**
-     * @return True if property value is 'true'; False otherwise.
+     * @return The nifi.security.origin.filter.enabled property determines if the OriginFilter check is enabled in Jetty.
+     * The OriginFilter checks if the request header contains an Origin or Referer that matches the server side origin.
      */
-    public Boolean isOriginFilterEnabled() {
+    public boolean isOriginFilterEnabled() {
         final String remoteInputHttpEnabled = getProperty(SECURITY_ORIGIN_FILTER_ENABLED, "false");
 
         return "true".equalsIgnoreCase(remoteInputHttpEnabled);
