@@ -79,6 +79,8 @@ public abstract class NiFiProperties {
     public static final String PERSISTENT_STATE_DIRECTORY = "nifi.persistent.state.directory";
     public static final String BORED_YIELD_DURATION = "nifi.bored.yield.duration";
     public static final String PROCESSOR_SCHEDULING_TIMEOUT = "nifi.processor.scheduling.timeout";
+    public static final String BACKPRESSURE_COUNT = "nifi.queue.backpressure.count";
+    public static final String BACKPRESSURE_SIZE = "nifi.queue.backpressure.size";
 
     // content repository properties
     public static final String REPOSITORY_CONTENT_PREFIX = "nifi.content.repository.directory.";
@@ -129,11 +131,6 @@ public abstract class NiFiProperties {
     public static final String COMPONENT_STATUS_REPOSITORY_IMPLEMENTATION = "nifi.components.status.repository.implementation";
     public static final String COMPONENT_STATUS_SNAPSHOT_FREQUENCY = "nifi.components.status.snapshot.frequency";
 
-    // encryptor properties
-    public static final String NF_SENSITIVE_PROPS_KEY = "nifi.sensitive.props.key";
-    public static final String NF_SENSITIVE_PROPS_ALGORITHM = "nifi.sensitive.props.algorithm";
-    public static final String NF_SENSITIVE_PROPS_PROVIDER = "nifi.sensitive.props.provider";
-
     // security properties
     public static final String SECURITY_KEYSTORE = "nifi.security.keystore";
     public static final String SECURITY_KEYSTORE_TYPE = "nifi.security.keystoreType";
@@ -183,6 +180,7 @@ public abstract class NiFiProperties {
     public static final String WEB_THREADS = "nifi.web.jetty.threads";
     public static final String WEB_MAX_HEADER_SIZE = "nifi.web.max.header.size";
     public static final String WEB_PROXY_CONTEXT_PATH = "nifi.web.proxy.context.path";
+    public static final String WEB_PROXY_HOST = "nifi.web.proxy.host";
 
     // ui properties
     public static final String UI_BANNER_TEXT = "nifi.ui.banner.text";
@@ -254,6 +252,8 @@ public abstract class NiFiProperties {
     public static final String DEFAULT_SWAP_OUT_PERIOD = "5 sec";
     public static final int DEFAULT_SWAP_IN_THREADS = 4;
     public static final int DEFAULT_SWAP_OUT_THREADS = 4;
+    public static final long DEFAULT_BACKPRESSURE_COUNT = 10_000L;
+    public static final String DEFAULT_BACKPRESSURE_SIZE = "1 GB";
     public static final String DEFAULT_ADMINISTRATIVE_YIELD_DURATION = "30 sec";
     public static final String DEFAULT_PERSISTENT_STATE_DIRECTORY = "./conf/state";
     public static final String DEFAULT_COMPONENT_STATUS_SNAPSHOT_FREQUENCY = "5 mins";
@@ -291,6 +291,7 @@ public abstract class NiFiProperties {
 
     // Kerberos defaults
     public static final String DEFAULT_KERBEROS_AUTHENTICATION_EXPIRATION = "12 hours";
+
 
     /**
      * Retrieves the property value for the given property key.
@@ -600,6 +601,25 @@ public abstract class NiFiProperties {
         } catch (NumberFormatException nfe) {
         }
         return sslPort;
+    }
+
+    public boolean isHTTPSConfigured() {
+        return getSslPort() != null;
+    }
+
+    /**
+     * Determines the HTTP/HTTPS port NiFi is configured to bind to. Prefers the HTTPS port. Throws an exception if neither is configured.
+     *
+     * @return the configured port number
+     */
+    public Integer getConfiguredHttpOrHttpsPort() throws RuntimeException {
+        if (getSslPort() != null) {
+            return getSslPort();
+        } else if (getPort() != null) {
+            return getPort();
+        } else {
+            throw new RuntimeException("The HTTP or HTTPS port must be configured");
+        }
     }
 
     public String getWebMaxHeaderSize() {
@@ -1302,8 +1322,40 @@ public abstract class NiFiProperties {
     }
 
     /**
-     * Returns the whitelisted proxy context paths as a comma-delimited string. The paths have been normalized to the form {@code /some/context/path}.
+     * Returns the whitelisted proxy hostnames (and IP addresses) as a comma-delimited string.
+     * The hosts have been normalized to the form {@code somehost.com}, {@code somehost.com:port}, or {@code 127.0.0.1}.
+     * <p>
+     * Note: Calling {@code NiFiProperties.getProperty(NiFiProperties.WEB_PROXY_HOST)} will not normalize the hosts.
      *
+     * @return the hostname(s)
+     */
+    public String getWhitelistedHosts() {
+        return StringUtils.join(getWhitelistedHostsAsList(), ",");
+    }
+
+    /**
+     * Returns the whitelisted proxy hostnames (and IP addresses) as a List. The hosts have been normalized to the form {@code somehost.com}, {@code somehost.com:port}, or {@code 127.0.0.1}.
+     *
+     * @return the hostname(s)
+     */
+    public List<String> getWhitelistedHostsAsList() {
+        String rawProperty = getProperty(WEB_PROXY_HOST, "");
+        List<String> hosts = Arrays.asList(rawProperty.split(","));
+        return hosts.stream()
+                .map(this::normalizeHost).filter(host -> !StringUtils.isBlank(host)).collect(Collectors.toList());
+    }
+
+    String normalizeHost(String host) {
+        if (host == null || host.equalsIgnoreCase("")) {
+            return "";
+        } else {
+            return host.trim();
+        }
+    }
+
+    /**
+     * Returns the whitelisted proxy context paths as a comma-delimited string. The paths have been normalized to the form {@code /some/context/path}.
+     * <p>
      * Note: Calling {@code NiFiProperties.getProperty(NiFiProperties.WEB_PROXY_CONTEXT_PATH)} will not normalize the paths.
      *
      * @return the path(s)
@@ -1342,6 +1394,25 @@ public abstract class NiFiProperties {
         return getPropertyKeys().stream().filter(k ->
                 k.startsWith(PROVENANCE_REPO_ENCRYPTION_KEY_ID + ".") || k.equalsIgnoreCase(PROVENANCE_REPO_ENCRYPTION_KEY)
         ).collect(Collectors.toList());
+    }
+
+    public Long getDefaultBackPressureObjectThreshold() {
+        long backPressureCount;
+        try {
+            String backPressureCountStr = getProperty(BACKPRESSURE_COUNT);
+            if (backPressureCountStr == null || backPressureCountStr.trim().isEmpty()) {
+                backPressureCount = DEFAULT_BACKPRESSURE_COUNT;
+            } else {
+                backPressureCount = Long.parseLong(backPressureCountStr);
+            }
+        } catch (NumberFormatException nfe) {
+            backPressureCount = DEFAULT_BACKPRESSURE_COUNT;
+        }
+        return backPressureCount;
+    }
+
+    public String getDefaultBackPressureDataSizeThreshold() {
+        return getProperty(BACKPRESSURE_SIZE, DEFAULT_BACKPRESSURE_SIZE);
     }
 
     /**
