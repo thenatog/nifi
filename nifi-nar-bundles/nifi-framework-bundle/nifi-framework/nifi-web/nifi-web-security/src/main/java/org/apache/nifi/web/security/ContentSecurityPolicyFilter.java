@@ -33,7 +33,7 @@ import javax.servlet.FilterConfig;
  */
 public class ContentSecurityPolicyFilter implements Filter {
     private static final String HEADER = "Content-Security-Policy";
-    private static final String POLICY = "frame-ancestors self";
+    private static final String POLICY = "frame-ancestors 'self'";
 
     private static final Logger logger = LoggerFactory.getLogger(ContentSecurityPolicyFilter.class);
 
