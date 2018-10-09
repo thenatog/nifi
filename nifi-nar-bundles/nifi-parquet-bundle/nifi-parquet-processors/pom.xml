@@ -83,6 +83,7 @@
         </dependency>
     </dependencies>
     <dependencyManagement>
+        <!-- Explicitly force Netty to 3.10.6 because versions prior to 3.9.0 had a CVE -->
         <dependencies>
             <dependency>
                 <groupId>io.netty</groupId>
