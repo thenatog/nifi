@@ -19,42 +19,6 @@ language governing permissions and limitations under the License. -->
     <artifactId>nifi-assembly</artifactId>
     <packaging>pom</packaging>
     <description>This is the assembly Apache NiFi</description>
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <finalName>nifi-${project.version}</finalName>
-                    <attach>false</attach>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make shared resource</id>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <archiverConfig>
-                                <defaultDirectoryMode>0775</defaultDirectoryMode>
-                                <directoryMode>0775</directoryMode>
-                                <fileMode>0664</fileMode>
-                            </archiverConfig>
-                            <descriptors>
-                                <descriptor>src/main/assembly/dependencies.xml</descriptor>
-                            </descriptors>
-                            <tarLongFileMode>posix</tarLongFileMode>
-                            <formats>
-                                <format>dir</format>
-                                <format>zip</format>
-                                <format>tar.gz</format>
-                            </formats>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
     <dependencies>
         <dependency> <!-- handling this explicitly  Must be in root lib -->
             <groupId>javax.servlet</groupId>
@@ -729,6 +693,133 @@ language governing permissions and limitations under the License. -->
         </dependency>
     </dependencies>
     <profiles>
+        <profile>
+            <id>build</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <finalName>nifi-${project.version}</finalName>
+                            <attach>false</attach>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>make shared resource</id>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <archiverConfig>
+                                        <defaultDirectoryMode>0775</defaultDirectoryMode>
+                                        <directoryMode>0775</directoryMode>
+                                        <fileMode>0664</fileMode>
+                                    </archiverConfig>
+                                    <descriptors>
+                                        <descriptor>src/main/assembly/dependencies.xml</descriptor>
+                                    </descriptors>
+                                    <tarLongFileMode>posix</tarLongFileMode>
+                                    <formats>
+                                        <format>dir</format>
+                                        <format>zip</format>
+                                    </formats>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>skip-zip</id>
+            <activation>
+                <property>
+                    <name>skipZip</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <finalName>nifi-${project.version}</finalName>
+                            <attach>false</attach>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>make shared resource</id>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <archiverConfig>
+                                        <defaultDirectoryMode>0775</defaultDirectoryMode>
+                                        <directoryMode>0775</directoryMode>
+                                        <fileMode>0664</fileMode>
+                                    </archiverConfig>
+                                    <descriptors>
+                                        <descriptor>src/main/assembly/dependencies.xml</descriptor>
+                                    </descriptors>
+                                    <tarLongFileMode>posix</tarLongFileMode>
+                                    <formats>
+                                        <format>dir</format>
+                                    </formats>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>build-tar</id>
+            <activation>
+                <property>
+                    <name>buildTar</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <finalName>nifi-${project.version}</finalName>
+                            <attach>false</attach>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>make shared resource</id>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <archiverConfig>
+                                        <defaultDirectoryMode>0775</defaultDirectoryMode>
+                                        <directoryMode>0775</directoryMode>
+                                        <fileMode>0664</fileMode>
+                                    </archiverConfig>
+                                    <descriptors>
+                                        <descriptor>src/main/assembly/dependencies.xml</descriptor>
+                                    </descriptors>
+                                    <tarLongFileMode>posix</tarLongFileMode>
+                                    <formats>
+                                        <format>dir</format>
+                                        <format>zip</format>
+                                        <format>tar.gz</format>
+                                    </formats>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>include-grpc</id>
             <!-- This profile handles the inclusion of grpc artifacts. They are notoriously
