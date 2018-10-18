@@ -45,7 +45,7 @@ public class ContentSecurityPolicyFilterTest {
         originFilter.getFilter().doFilter(mockRequest, mockResponse, mockFilterChain);
 
         // Verify
-        assertEquals("frame-ancestors 'self'", mockResponse.getHeader("Content-Security-Policy"));
+        assertEquals("default-src 'self'; frame-ancestors 'self'", mockResponse.getHeader("Content-Security-Policy"));
     }
 
     @Test
@@ -64,7 +64,7 @@ public class ContentSecurityPolicyFilterTest {
         originFilter.getFilter().doFilter(mockRequest, mockResponse, mockFilterChain);
 
         // Verify
-        assertEquals("frame-ancestors 'self'", mockResponse.getHeader("Content-Security-Policy"));
+        assertEquals("default-src 'self'; frame-ancestors 'self'", mockResponse.getHeader("Content-Security-Policy"));
     }
 
 }

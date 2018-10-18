@@ -24,6 +24,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.security.Security;
 import javax.servlet.Filter;
 import javax.servlet.FilterConfig;
 
@@ -32,8 +33,17 @@ import javax.servlet.FilterConfig;
  *
  */
 public class ContentSecurityPolicyFilter implements Filter {
-    private static final String HEADER = "Content-Security-Policy";
-    private static final String POLICY = "frame-ancestors 'self'";
+    private static final String CSP = "Content-Security-Policy";
+    private static final String CSPvalue = "frame-ancestors 'self'";
+
+    private static final String XXSS = "X-XSS-Protection";
+    private static final String XXSSvalue = "1; mode=block";
+
+    private static final String XCTO = "X-Content-Type-Options";
+    private static final String XCTOvalue = "nosniff";
+
+    private static final String HSTS = "Strict-Transport-Security";
+    private static final String HSTSvalue = "max-age=31540000";
 
     private static final Logger logger = LoggerFactory.getLogger(ContentSecurityPolicyFilter.class);
 
@@ -42,7 +52,11 @@ public class ContentSecurityPolicyFilter implements Filter {
             throws IOException, ServletException {
 
         final HttpServletResponse response = (HttpServletResponse) resp;
-        response.setHeader(HEADER, POLICY);
+        response.setHeader(CSP, CSPvalue);
+        response.setHeader(XXSS, XXSSvalue);
+        response.setHeader(XCTO, XCTOvalue);
+        response.setHeader(HSTS, HSTSvalue);
+
 
         filterChain.doFilter(req, resp);
     }
