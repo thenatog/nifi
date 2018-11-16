@@ -19,14 +19,19 @@ package org.apache.nifi.io.socket;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.X509CertSelector;
 
+import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -35,6 +40,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 import org.apache.nifi.security.util.KeyStoreUtils;
 import org.apache.nifi.util.NiFiProperties;
+import org.apache.nifi.util.StringUtils;
 import org.apache.nifi.util.file.FileUtils;
 
 public class SSLContextFactory {
@@ -49,7 +55,8 @@ public class SSLContextFactory {
     private final KeyManager[] keyManagers;
     private final TrustManager[] trustManagers;
 
-    public SSLContextFactory(final NiFiProperties properties) throws NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, KeyStoreException, UnrecoverableKeyException {
+    public SSLContextFactory(final NiFiProperties properties)
+            throws NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, KeyStoreException, UnrecoverableKeyException, InvalidAlgorithmParameterException {
         keystore = properties.getProperty(NiFiProperties.SECURITY_KEYSTORE);
         keystorePass = getPass(properties.getProperty(NiFiProperties.SECURITY_KEYSTORE_PASSWD));
         keystoreType = properties.getProperty(NiFiProperties.SECURITY_KEYSTORE_TYPE);
@@ -77,8 +84,8 @@ public class SSLContextFactory {
         } finally {
             FileUtils.closeQuietly(trustStoreStream);
         }
-        final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        trustManagerFactory.init(trustStore);
+
+        final TrustManagerFactory trustManagerFactory = getTrustManagerFactory(trustStore, properties.isOCSPEnabled(), properties.getProperty(NiFiProperties.SECURITY_OCSP_RESPONDER_URL));
 
         keyManagers = keyManagerFactory.getKeyManagers();
         trustManagers = trustManagerFactory.getTrustManagers();
@@ -100,8 +107,8 @@ public class SSLContextFactory {
      * @throws java.security.UnrecoverableKeyException if the key cannot be recovered
      * @throws java.security.KeyManagementException if the key is improper
      */
-    public SSLContext createSslContext() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException,
-            UnrecoverableKeyException, KeyManagementException {
+    public SSLContext createSslContext()
+            throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException, KeyManagementException {
 
         // initialize the ssl context
         final SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -111,4 +118,31 @@ public class SSLContextFactory {
         return sslContext;
 
     }
+
+    private TrustManagerFactory getTrustManagerFactory(KeyStore trustStore, boolean ocspEnabled, String responderURL)
+            throws KeyStoreException, InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+
+        if (ocspEnabled) {
+            if ("PKIX".equalsIgnoreCase(TrustManagerFactory.getDefaultAlgorithm())) {
+                PKIXBuilderParameters pbParams = new PKIXBuilderParameters(trustStore, new X509CertSelector());
+                pbParams.setRevocationEnabled(true);
+                Security.setProperty("ocsp.enable", "true");
+                if(!StringUtils.isBlank(responderURL)) {
+                    Security.setProperty("ocsp.responderURL", responderURL);
+                }
+                trustManagerFactory.init(new CertPathTrustManagerParameters(pbParams));
+            } else {
+                throw new NoSuchAlgorithmException("PKIX algorithm was not available on this system. You must disable OCSP checking by changing "
+                        + NiFiProperties.SECURITY_OCSP_ENABLED
+                        + " to false.");
+            }
+        } else {
+            trustManagerFactory.init(trustStore);
+        }
+
+        return trustManagerFactory;
+    }
+
 }

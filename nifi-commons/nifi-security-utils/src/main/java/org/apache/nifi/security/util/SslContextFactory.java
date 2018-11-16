@@ -49,7 +49,7 @@ public final class SslContextFactory {
 
     /**
      * Creates a SSLContext instance using the given information. The password for the key is assumed to be the same
-     * as the password for the keystore. If this is not the case, the {@link #createSslContext(String, char[], chart[], String, String, char[], String, ClientAuth, String)}
+     * as the password for the keystore. If this is not the case, the {@link #createSslContext(String, char[], char[], String, String, char[], String, ClientAuth, String)}
      * method should be used instead
      *
      * @param keystore the full path to the keystore
@@ -161,9 +161,9 @@ public final class SslContextFactory {
      * @throws java.security.KeyManagementException if unable to manage the key
      */
     public static SSLContext createSslContext(
-        final String keystore, final char[] keystorePasswd, final String keystoreType, final String protocol)
-        throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException,
-        UnrecoverableKeyException, KeyManagementException {
+            final String keystore, final char[] keystorePasswd, final String keystoreType, final String protocol)
+            throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException,
+            UnrecoverableKeyException, KeyManagementException {
 
         // create SSL Context passing keystore password as the key password
         return createSslContext(keystore, keystorePasswd, keystorePasswd, keystoreType, protocol);
@@ -186,7 +186,7 @@ public final class SslContextFactory {
      * @throws java.security.KeyManagementException if unable to manage the key
      */
     public static SSLContext createSslContext(
-        final String keystore, final char[] keystorePasswd, final char[] keyPasswd, final String keystoreType, final String protocol)
+            final String keystore, final char[] keystorePasswd, final char[] keyPasswd, final String keystoreType, final String protocol)
             throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException,
             UnrecoverableKeyException, KeyManagementException {
 

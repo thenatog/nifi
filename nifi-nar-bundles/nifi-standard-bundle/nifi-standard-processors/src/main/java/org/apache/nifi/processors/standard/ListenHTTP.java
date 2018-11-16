@@ -289,7 +289,6 @@ public class ListenHTTP extends AbstractSessionFactoryProcessor {
             httpConfiguration.addCustomizer(new SecureRequestCustomizer());
 
             // build the connector
-
             connector = new ServerConnector(server, new SslConnectionFactory(contextFactory, "http/1.1"), new HttpConnectionFactory(httpConfiguration));
         }
 
