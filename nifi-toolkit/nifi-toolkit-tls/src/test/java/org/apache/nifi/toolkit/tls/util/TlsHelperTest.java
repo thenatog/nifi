@@ -30,12 +30,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -45,14 +47,17 @@ import java.security.NoSuchProviderException;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SignatureException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.nifi.security.util.CertificateUtils;
 import org.apache.nifi.toolkit.tls.configuration.TlsConfig;
@@ -448,4 +453,26 @@ public class TlsHelperTest {
         assertEquals("CN=testuser_OU=NiFi_Organisation", escapedClientDn);
     }
 
+    private KeyStore setupKeystore() throws Exception {
+
+        KeyStore ks = KeyStore.getInstance("JKS");
+        InputStream readStream = getClass().getClassLoader().getResourceAsStream("keystore.jks");
+        ks.load(readStream, "changeit".toCharArray());
+
+        return ks;
+    }
+
+    @Test
+    public void testCertificatesWrite() throws Exception {
+        KeyStore keyStore = setupKeystore();
+        HashMap<String, Certificate> certs = TlsHelper.extractCerts(keyStore);
+        TlsHelper.outputCertsAsPem(certs, new File("/tmp"),".crt");
+    }
+
+    @Test
+    public void testKeysWrite() throws Exception {
+        KeyStore keyStore = setupKeystore();
+        HashMap<String, Key> keys = TlsHelper.extractKeys(keyStore, "changeit".toCharArray());
+        TlsHelper.outputKeysAsPem(keys, new File("/tmp"), ".key");
+    }
 }
