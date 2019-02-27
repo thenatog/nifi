@@ -18,6 +18,7 @@
 package org.apache.nifi.toolkit.tls.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
@@ -77,7 +79,9 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.AdditionalMatchers;
 import org.mockito.Mock;
@@ -111,6 +115,9 @@ public class TlsHelperTest {
 
     @Mock
     OutputStreamFactory outputStreamFactory;
+
+    @Rule
+    public TemporaryFolder tempFolder = new TemporaryFolder();
 
     private ByteArrayOutputStream tmpFileOutputStream;
 
@@ -463,16 +470,48 @@ public class TlsHelperTest {
     }
 
     @Test
-    public void testCertificatesWrite() throws Exception {
+    public void testOutputCertsAsPem() throws Exception {
+        File folder = tempFolder.newFolder("splitKeystoreOutputDir");
         KeyStore keyStore = setupKeystore();
         HashMap<String, Certificate> certs = TlsHelper.extractCerts(keyStore);
-        TlsHelper.outputCertsAsPem(certs, new File("/tmp"),".crt");
+        TlsHelper.outputCertsAsPem(certs, folder,".crt");
+
+        for(File file : folder.listFiles()) {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            PEMParser pemParser = new PEMParser(br);
+            X509CertificateHolder key = (X509CertificateHolder) pemParser.readObject();
+            assertNotNull(key.getSignature());
+        }
     }
 
     @Test
-    public void testKeysWrite() throws Exception {
+    public void testOutputKeysAsPem() throws Exception {
+        File folder = tempFolder.newFolder("splitKeystoreOutputDir");
         KeyStore keyStore = setupKeystore();
         HashMap<String, Key> keys = TlsHelper.extractKeys(keyStore, "changeit".toCharArray());
-        TlsHelper.outputKeysAsPem(keys, new File("/tmp"), ".key");
+        TlsHelper.outputKeysAsPem(keys, folder, ".key");
+
+        for(File file : folder.listFiles()) {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            PEMParser pemParser = new PEMParser(br);
+            PEMKeyPair key = (PEMKeyPair) pemParser.readObject();
+            assertNotNull(key.getPrivateKeyInfo());
+        }
+    }
+
+    @Test
+    public void testExtractCerts() throws Exception {
+        KeyStore keyStore = setupKeystore();
+        HashMap<String, Certificate> certs = TlsHelper.extractCerts(keyStore);
+        assertEquals(2, certs.size());
+        certs.forEach((String p, Certificate q) -> assertEquals("X.509", q.getType()));
+    }
+
+    @Test
+    public void testExtractKeys() throws Exception {
+        KeyStore keyStore = setupKeystore();
+        HashMap<String, Key> keys = TlsHelper.extractKeys(keyStore, "changeit".toCharArray());
+        assertEquals(1, keys.size());
+        keys.forEach((String alias, Key key) -> assertEquals("PKCS#8", key.getFormat()));
     }
 }
