@@ -475,7 +475,7 @@ public class TlsToolkitStandaloneCommandLineTest {
         }
     }
 
-    @Test
+    @Test(expected = CommandLineParseException.class)
     public void testSplitKeystoreMissingPasswords() throws Exception {
 
         String keyPass = "changeit";

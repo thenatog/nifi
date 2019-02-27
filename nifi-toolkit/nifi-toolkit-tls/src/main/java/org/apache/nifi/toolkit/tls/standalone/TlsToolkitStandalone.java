@@ -42,7 +42,6 @@ import org.apache.nifi.security.util.CertificateUtils;
 import org.apache.nifi.security.util.KeyStoreUtils;
 import org.apache.nifi.security.util.KeystoreType;
 import org.apache.nifi.toolkit.tls.configuration.InstanceDefinition;
-import org.apache.nifi.toolkit.tls.configuration.KeystoreConfig;
 import org.apache.nifi.toolkit.tls.configuration.StandaloneConfig;
 import org.apache.nifi.toolkit.tls.configuration.TlsClientConfig;
 import org.apache.nifi.toolkit.tls.manager.TlsCertificateAuthorityManager;
