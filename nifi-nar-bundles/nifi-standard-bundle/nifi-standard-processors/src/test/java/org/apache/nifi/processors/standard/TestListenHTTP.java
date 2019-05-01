@@ -26,6 +26,7 @@ import org.apache.nifi.ssl.StandardSSLContextService;
 import org.apache.nifi.util.MockFlowFile;
 import org.apache.nifi.util.TestRunner;
 import org.apache.nifi.util.TestRunners;
+import org.conscrypt.OpenSSLProvider;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -48,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -85,7 +87,7 @@ public class TestListenHTTP {
         availablePort = NetworkUtils.availablePort();
         runner.setVariable(PORT_VARIABLE, Integer.toString(availablePort));
         runner.setVariable(BASEPATH_VARIABLE, HTTP_BASE_PATH);
-
+        Security.addProvider(new OpenSSLProvider());
     }
 
     @After

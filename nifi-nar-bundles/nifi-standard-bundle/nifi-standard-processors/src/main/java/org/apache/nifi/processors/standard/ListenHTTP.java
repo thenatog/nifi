@@ -17,6 +17,7 @@
 package org.apache.nifi.processors.standard;
 
 import java.io.IOException;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -54,6 +55,7 @@ import org.apache.nifi.ssl.RestrictedSSLContextService;
 import org.apache.nifi.ssl.SSLContextService;
 import org.apache.nifi.stream.io.LeakyBucketStreamThrottler;
 import org.apache.nifi.stream.io.StreamThrottler;
+import org.conscrypt.OpenSSLProvider;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -244,6 +246,7 @@ public class ListenHTTP extends AbstractSessionFactoryProcessor {
         final boolean needClientAuth = sslContextService != null && sslContextService.getTrustStoreFile() != null;
 
         final SslContextFactory contextFactory = new SslContextFactory();
+        contextFactory.setProvider("Conscrypt");
         contextFactory.setNeedClientAuth(needClientAuth);
 
         if (needClientAuth) {

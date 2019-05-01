@@ -27,6 +27,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.nio.file.Paths;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -79,6 +80,8 @@ import org.apache.nifi.web.security.headers.ContentSecurityPolicyFilter;
 import org.apache.nifi.web.security.headers.StrictTransportSecurityFilter;
 import org.apache.nifi.web.security.headers.XFrameOptionsFilter;
 import org.apache.nifi.web.security.headers.XSSProtectionFilter;
+import org.conscrypt.Conscrypt;
+import org.conscrypt.OpenSSLProvider;
 import org.eclipse.jetty.annotations.AnnotationConfiguration;
 import org.eclipse.jetty.deploy.App;
 import org.eclipse.jetty.deploy.DeploymentManager;
@@ -120,6 +123,8 @@ public class JettyServer implements NiFiServer, ExtensionUiLoader {
 
     private static final String CONTAINER_INCLUDE_PATTERN_KEY = "org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern";
     private static final String CONTAINER_INCLUDE_PATTERN_VALUE = ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\\\.jar$|.*/[^/]*taglibs.*\\.jar$";
+
+    private static final String CONSCRYPT = "Conscrypt";
 
     private static final FileFilter WAR_FILTER = new FileFilter() {
         @Override
@@ -868,6 +873,13 @@ public class JettyServer implements NiFiServer, ExtensionUiLoader {
     }
 
     protected static void configureSslContextFactory(SslContextFactory contextFactory, NiFiProperties props) {
+        // Use Conscrypt as our SSL provider to improve performance
+        Security.addProvider(Conscrypt.newProviderBuilder().provideTrustManager(true).build());
+        //Security.addProvider(new OpenSSLProvider());
+        contextFactory.setProvider(CONSCRYPT);
+        contextFactory.addExcludeProtocols("TLSv1.3");
+        contextFactory.setEndpointIdentificationAlgorithm(null);
+
         // require client auth when not supporting login, Kerberos service, or anonymous access
         if (props.isClientAuthRequiredForRestApi()) {
             contextFactory.setNeedClientAuth(true);
