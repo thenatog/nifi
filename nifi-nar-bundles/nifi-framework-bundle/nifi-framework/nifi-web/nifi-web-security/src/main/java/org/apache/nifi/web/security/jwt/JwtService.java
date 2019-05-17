@@ -170,17 +170,15 @@ public class JwtService {
         }
     }
 
-    public void logOut(String authorizationHeader) {
-        if (authorizationHeader == null || authorizationHeader.isEmpty()) {
-            throw new JwtException("Log out failed: The required Authorization header was not present in the request to log out user.");
+    public void logOut(String userIdentity) {
+        if (userIdentity == null || userIdentity.isEmpty()) {
+            throw new JwtException("Log out failed: The user identity was not present in the request token to log out user.");
         }
 
-        String identity = NiFiUserUtils.getNiFiUserIdentity();
-
         try {
-            keyService.deleteKey(identity);
+            keyService.deleteKey(userIdentity);
         } catch (Exception e) {
-            logger.error("Unable to log out user: " + identity + ". Failed to remove their token from database.");
+            logger.error("Unable to log out user: " + userIdentity + ". Failed to remove their token from database.");
             throw e;
         }
     }
