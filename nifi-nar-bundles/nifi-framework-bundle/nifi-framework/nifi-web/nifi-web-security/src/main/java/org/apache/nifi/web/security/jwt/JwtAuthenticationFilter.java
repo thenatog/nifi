@@ -16,7 +16,6 @@
  */
 package org.apache.nifi.web.security.jwt;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.nifi.web.security.NiFiAuthenticationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
