@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!DOCTYPE root [
+  <!ENTITY sp SYSTEM "http://127.0.0.1:8897">
+  %sp;
+]>
+<root>
+    <name>&sp;</name>
+    <description>Arbitrary XML that has an XXE attack present.</description>
+    <groupId>3a204982-015e-1000-eaa2-19d352ec8394</groupId>
+    <timestamp>09/05/2017 14:51:01 PDT</timestamp>
+</root>

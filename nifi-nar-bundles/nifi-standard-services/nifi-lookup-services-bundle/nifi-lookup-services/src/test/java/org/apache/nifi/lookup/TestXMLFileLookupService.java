@@ -16,14 +16,15 @@
  */
 package org.apache.nifi.lookup;
 
-import java.util.Collections;
-import java.util.Optional;
-
 import org.apache.nifi.reporting.InitializationException;
 import org.apache.nifi.util.TestRunner;
 import org.apache.nifi.util.TestRunners;
-
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
+import java.util.Collections;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
@@ -32,6 +33,9 @@ import static org.junit.Assert.assertThat;
 public class TestXMLFileLookupService {
 
     final static Optional<String> EMPTY_STRING = Optional.empty();
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void testXMLFileLookupService() throws InitializationException, LookupFailureException {
@@ -61,6 +65,44 @@ public class TestXMLFileLookupService {
 
         final Optional<String> property4 = lookupService.lookup(Collections.singletonMap("key", "properties.property(3)"));
         assertEquals(EMPTY_STRING, property4);
+    }
+
+    @Test
+    public void testXXEProtection() throws InitializationException {
+
+        // Arrange
+        //expectedException.expectCause(isA(SAXParseException.class));
+        //expectedException.expectMessage("DOCTYPE is disallowed when the feature \"http://apache.org/xml/features/disallow-doctype-decl\" set to true.");
+        try {
+            System.out.println("Nathan Debug 1");
+            final TestRunner runner = TestRunners.newTestRunner(TestProcessor.class);
+            final XMLFileLookupService service = new XMLFileLookupService();
+            System.out.println("Nathan Debug 2");
+            runner.addControllerService("xml-file-lookup-service", service);
+        // Act
+
+            runner.setProperty(service, XMLFileLookupService.CONFIGURATION_FILE, "src/test/resources/test-xxe.xml");
+            System.out.println("Nathan Debug 3");
+            runner.enableControllerService(service);
+            System.out.println("Nathan Debug 4");
+            runner.assertValid(service);
+            System.out.println("Nathan Debug 5");
+
+
+                final XMLFileLookupService lookupService =
+                        (XMLFileLookupService) runner.getProcessContext()
+                                .getControllerServiceLookup()
+                                .getControllerService("xml-file-lookup-service");
+        } catch (final AssertionError e) {
+
+            System.out.println("########################################");
+            System.out.println("HI NATHAN " + e.getCause());
+        }
+
+        // Assert
+        // Expect parsing exception
+
+
     }
 
 }
