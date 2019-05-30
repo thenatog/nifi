@@ -33,24 +33,26 @@ import java.io.InputStream;
 import java.io.Reader;
 
 /**
- * This class overrides the Apache commons 'XMLConfiguration' class to disable processing of XML Document Type Definition (DTD) declarations. This class
- * should be used in all cases where an XML configuration file will be used by NiFi. It is currently used by the XMLFileLookupService.
+ * For security reasons, this class overrides the Apache commons 'XMLConfiguration' class to disable processing of XML external entity (XXE) declarations.
+ * This class should be used in all cases where an XML configuration file will be used by NiFi. It is currently used by the XMLFileLookupService.
  */
 public class SafeXMLConfiguration extends XMLConfiguration {
 
-    /** Schema Langauge key for the parser */
+    // Schema Langauge key for the parser
     private static final String JAXP_SCHEMA_LANGUAGE =
             "http://java.sun.com/xml/jaxp/properties/schemaLanguage";
 
-    /** Schema Language for the parser */
+    // Schema Language for the parser
     private static final String W3C_XML_SCHEMA =
             "http://www.w3.org/2001/XMLSchema";
 
-    /** DocumentBuilderFactory processing DTD features must be disabled to protect against XXE attacks **/
+    // These features are used to disable processing external entities in the DocumentBuilderFactory to protect against XXE attacks
     private static final String DISALLOW_DOCTYPES = "http://apache.org/xml/features/disallow-doctype-decl";
     private static final String ALLOW_EXTERNAL_GENERAL_ENTITIES = "http://xml.org/sax/features/external-general-entities";
     private static final String ALLOW_EXTERNAL_PARAM_ENTITIES = "http://xml.org/sax/features/external-parameter-entities";
     private static final String ALLOW_EXTERNAL_DTD = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
+
+    private static final String XXE_ERROR_MESSAGE = "XML configuration file contained an external entity. To eliminate XXE vulnerabilities, NiFi has external entity processing disabled.";
 
     @Override
     public void initFileLocator(FileLocator loc) {
@@ -65,6 +67,11 @@ public class SafeXMLConfiguration extends XMLConfiguration {
         super(c);
     }
 
+    /**
+     * This overridden createDocumentBuilder() method sets the appropriate factory attributes to disable XXE parsing.
+     * @return Returns a safe DocumentBuilder
+     * @throws ParserConfigurationException
+     */
     @Override
     public DocumentBuilder createDocumentBuilder() throws ParserConfigurationException {
         if (getDocumentBuilder() != null) {
@@ -112,7 +119,13 @@ public class SafeXMLConfiguration extends XMLConfiguration {
         try {
             super.read(in);
         } catch (ConfigurationException e) {
-            throw handleXXERelatedException(e);
+            if (isXXERelatedException(e)) {
+                // Wrap this exception to tell the user their XML should not contain XXEs.
+                throw new ConfigurationException(XXE_ERROR_MESSAGE, e);
+            } else {
+                // Throw the original exception as it occurred for an unrelated reason.
+                throw e;
+            }
         }
     }
 
@@ -121,22 +134,23 @@ public class SafeXMLConfiguration extends XMLConfiguration {
         try {
             super.read(in);
         } catch (ConfigurationException e) {
+            if(isXXERelatedException(e)) {
+                // Wrap this exception to tell the user their XML should not contain XXEs.
+                throw new ConfigurationException(XXE_ERROR_MESSAGE, e);
+            } else {
+                // Throw the original exception as it occurred for an unrelated reason.
+                throw e;
+            }
 
-            throw handleXXERelatedException(e);
         }
     }
 
     /**
-     * This method will determine if the ConfigurationException was thrown because of a SAXParseException when attempting to parse a DTD/external entity. If it was, we add a NiFi specific message
-     * to indicate that external entities are disabled.
-     * @param e The ConfigurationException we need to check.
-     * @return If thrown due to external entity, returns the original wrapped ConfigurationException with an extra message. If it was not due to external entity parsing, returns the original exception.
+     * Determine if the ConfigurationException was thrown because the XML configuration file contains an external entity (XXE).
+     * @param e A ConfigurationException that was thrown when parsing the XML configuration file.
+     * @return True if the ConfigurationException was a result of attempting to parse an external entity (which is not allowed for security reasons). Returns false otherwise.
      */
-    private ConfigurationException handleXXERelatedException(ConfigurationException e) {
-        if(e.getCause() instanceof SAXParseException && e.getCause().getMessage().contains("DOCTYPE is disallowed")) {
-            return new ConfigurationException("XML configuration file contained an external entity. To eliminate XXE vulnerabilities, NiFi has external entity processing disabled.", e);
-        } else {
-            return e;
-        }
+    private boolean isXXERelatedException(ConfigurationException e) {
+        return (e.getCause() instanceof SAXParseException && e.getCause().getMessage().contains("DOCTYPE is disallowed"));
     }
 }
