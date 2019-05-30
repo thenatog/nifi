@@ -19,9 +19,7 @@ package org.apache.nifi.lookup;
 import org.apache.nifi.reporting.InitializationException;
 import org.apache.nifi.util.TestRunner;
 import org.apache.nifi.util.TestRunners;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -34,9 +32,6 @@ import static org.junit.Assert.assertTrue;
 public class TestXMLFileLookupService {
 
     final static Optional<String> EMPTY_STRING = Optional.empty();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void testXMLFileLookupService() throws InitializationException, LookupFailureException {
