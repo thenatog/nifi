@@ -70,7 +70,7 @@ public class SafeXMLConfiguration extends XMLConfiguration {
     /**
      * This overridden createDocumentBuilder() method sets the appropriate factory attributes to disable XXE parsing.
      * @return Returns a safe DocumentBuilder
-     * @throws ParserConfigurationException
+     * @throws ParserConfigurationException A configuration error
      */
     @Override
     public DocumentBuilder createDocumentBuilder() throws ParserConfigurationException {
@@ -101,11 +101,9 @@ public class SafeXMLConfiguration extends XMLConfiguration {
 
         if (isValidating()) {
             // register an error handler which detects validation errors
-            result.setErrorHandler(new DefaultHandler()
-            {
+            result.setErrorHandler(new DefaultHandler() {
                 @Override
-                public void error(SAXParseException ex) throws SAXException
-                {
+                public void error(SAXParseException ex) throws SAXException {
                     throw ex;
                 }
             });
