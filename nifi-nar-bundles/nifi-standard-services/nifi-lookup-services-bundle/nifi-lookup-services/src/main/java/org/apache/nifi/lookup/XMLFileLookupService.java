@@ -26,7 +26,8 @@ import org.apache.nifi.security.xml.SafeXMLConfiguration;
 @CapabilityDescription("A reloadable XML file-based lookup service." +
         " This service uses Apache Commons Configuration." +
         " Example XML configuration file and how to access specific configuration can be found at" +
-        " http://commons.apache.org/proper/commons-configuration/userguide/howto_hierarchical.html")
+        " http://commons.apache.org/proper/commons-configuration/userguide/howto_hierarchical.html." +
+        " External entity processing is disabled.")
 public class XMLFileLookupService extends CommonsConfigurationLookupService<SafeXMLConfiguration> {
 
 }

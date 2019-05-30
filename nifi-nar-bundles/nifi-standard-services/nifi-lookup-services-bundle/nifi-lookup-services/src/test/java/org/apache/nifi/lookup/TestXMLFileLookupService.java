@@ -29,6 +29,7 @@ import java.util.Optional;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class TestXMLFileLookupService {
 
@@ -71,38 +72,19 @@ public class TestXMLFileLookupService {
     public void testXXEProtection() throws InitializationException {
 
         // Arrange
-        //expectedException.expectCause(isA(SAXParseException.class));
-        //expectedException.expectMessage("DOCTYPE is disallowed when the feature \"http://apache.org/xml/features/disallow-doctype-decl\" set to true.");
+        final TestRunner runner = TestRunners.newTestRunner(TestProcessor.class);
+        final XMLFileLookupService service = new XMLFileLookupService();
+        runner.addControllerService("xml-file-lookup-service", service);
+        runner.setProperty(service, XMLFileLookupService.CONFIGURATION_FILE, "src/test/resources/test-xxe.xml");
+
         try {
-            System.out.println("Nathan Debug 1");
-            final TestRunner runner = TestRunners.newTestRunner(TestProcessor.class);
-            final XMLFileLookupService service = new XMLFileLookupService();
-            System.out.println("Nathan Debug 2");
-            runner.addControllerService("xml-file-lookup-service", service);
-        // Act
-
-            runner.setProperty(service, XMLFileLookupService.CONFIGURATION_FILE, "src/test/resources/test-xxe.xml");
-            System.out.println("Nathan Debug 3");
+            // Act
+            // Service will fail to enable because test-xxe.xml contains a DTD
             runner.enableControllerService(service);
-            System.out.println("Nathan Debug 4");
-            runner.assertValid(service);
-            System.out.println("Nathan Debug 5");
 
-
-                final XMLFileLookupService lookupService =
-                        (XMLFileLookupService) runner.getProcessContext()
-                                .getControllerServiceLookup()
-                                .getControllerService("xml-file-lookup-service");
-        } catch (final AssertionError e) {
-
-            System.out.println("########################################");
-            System.out.println("HI NATHAN " + e.getCause());
+        } catch (final Throwable e) {
+            // Assert
+            assertTrue(e.getMessage().contains("XML configuration file contained an external entity. To eliminate XXE vulnerabilities, NiFi has external entity processing disabled."));
         }
-
-        // Assert
-        // Expect parsing exception
-
-
     }
-
 }
