@@ -93,7 +93,7 @@ class ZooKeeperMigratorTest extends Specification {
         then:
         noExceptionThrown()
         def nodes = ZKPaths.getSortedChildren(client, '/').collect { ZKUtil.listSubTreeBFS(client, "/$it") }.flatten()
-        nodes.size() == 6
+        nodes.size() == 7
     }
 
     def "Send to open ZooKeeper without ACL migration with new multi-node parent"() {
@@ -109,7 +109,7 @@ class ZooKeeperMigratorTest extends Specification {
         then:
         noExceptionThrown()
         def nodes = ZKPaths.getSortedChildren(client, '/').collect { ZKUtil.listSubTreeBFS(client, "/$it") }.flatten()
-        nodes.size() == 7
+        nodes.size() == 8
     }
 
     def "Receive all nodes from ZooKeeper root"() {
@@ -128,7 +128,7 @@ class ZooKeeperMigratorTest extends Specification {
         then:
         noExceptionThrown()
         def persistedData = new Gson().fromJson(new JsonReader(new FileReader(outputFilePath)), List) as List
-        persistedData.size() == 5
+        persistedData.size() == 6
     }
 
     def "Receive Zookeeper node created with username and password"() {
@@ -168,7 +168,7 @@ class ZooKeeperMigratorTest extends Specification {
         then:
         noExceptionThrown()
         def nodes = ZKPaths.getSortedChildren(client, '/').collect { ZKUtil.listSubTreeBFS(client, "/$it") }.flatten()
-        nodes.size() == 3
+        nodes.size() == 4
     }
 
     def "Send to open Zookeeper with ACL migration"() {
@@ -184,7 +184,7 @@ class ZooKeeperMigratorTest extends Specification {
         then:
         noExceptionThrown()
         def nodes = ZKPaths.getSortedChildren(client, '/').collect { ZKUtil.listSubTreeBFS(client, "/$it") }.flatten()
-        nodes.size() == 3
+        nodes.size() == 4
     }
 
     def "Send to open Zookeeper using existing ACL"() {
