@@ -27,7 +27,7 @@
     <version>1.10.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <properties>
-        <atlas.version>0.8.1</atlas.version>
+        <atlas.version>0.8.2</atlas.version>
     </properties>
     <modules>
         <module>nifi-atlas-reporting-task</module>
