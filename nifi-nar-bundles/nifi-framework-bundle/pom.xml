@@ -266,7 +266,7 @@
             <dependency>
                 <groupId>org.quartz-scheduler</groupId>
                 <artifactId>quartz</artifactId>
-                <version>2.2.1</version>
+                <version>2.3.2</version>
                 <exclusions>
                     <!-- | Exclude the quartz 2.2.1 bundled version of c3p0
                     because it is lgpl licensed | We also don't use the JDBC related features
