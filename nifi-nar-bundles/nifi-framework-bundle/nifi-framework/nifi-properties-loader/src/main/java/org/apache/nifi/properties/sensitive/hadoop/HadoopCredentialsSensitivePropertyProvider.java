@@ -181,7 +181,6 @@ public class HadoopCredentialsSensitivePropertyProvider implements SensitiveProp
     /**
      * This method returns the first loadable key store instance referenced by the paths array.
      *
-     * @return loaded KeyStore
      * @throws SensitivePropertyProtectionException when no key store is loadable
      */
     private void loadKeyStore() {

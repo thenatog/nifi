@@ -86,6 +86,12 @@
           <groupId>com.google.cloud</groupId>
           <artifactId>google-cloud-kms</artifactId>
           <version>1.23.0</version>
+          <exclusions>
+            <exclusion>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-core</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
     </dependencies>
     <build>
@@ -110,6 +116,18 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <configuration>
+                    <numUnapprovedLicenses>0</numUnapprovedLicenses>
+                    <excludeSubProjects>false</excludeSubProjects>
+                    <excludes>
+                        <exclude>**/*.sidefile</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 </project>
