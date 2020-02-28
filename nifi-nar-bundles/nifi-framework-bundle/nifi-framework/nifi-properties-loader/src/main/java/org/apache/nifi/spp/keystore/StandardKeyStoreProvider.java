@@ -14,11 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.nifi.properties.sensitive;
+package org.apache.nifi.spp.keystore;
 
-import org.apache.nifi.spp.keystore.KeyStoreProvider;
-
-import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -26,34 +25,45 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 
 /**
- * Key Stores backed by byte arrays.  This class is used only by the KeyStore Sensitive Property Provider Integration Tests.
+ * KeyStores read from the file system.
  *
  */
-public class ByteArrayKeyStoreProvider implements KeyStoreProvider {
-    private final byte[] source;
+public class StandardKeyStoreProvider implements KeyStoreProvider {
+    private final String filename;
     private final String storeType;
     private final String storePassword;
 
-    public ByteArrayKeyStoreProvider(byte[] source, String storeType, String storePassword) {
-        this.source = source;
+    /**
+     * Creates a StandardKeyStoreProvider.
+     *
+     * @param filename  key store filename
+     * @param storeType key store type, e.g., JCEKS
+     * @param storePassword key store password
+     */
+    public StandardKeyStoreProvider(String filename, String storeType, String storePassword) {
+        this.filename = filename;
         this.storeType = storeType;
         this.storePassword = storePassword;
     }
 
     /**
-     * Reads, loads, and returns a KeyStore from the configured byte array.
+     * Reads, loads, and returns a KeyStore from configured filename.
      *
      * @return new KeyStore
      * @throws IOException if the KeyStore cannot be opened or read
      */
     public KeyStore getKeyStore() throws IOException {
         KeyStore store;
+        File file = new File(filename);
+
         try {
             store = KeyStore.getInstance(storeType.toUpperCase());
-            store.load(new ByteArrayInputStream(source), storePassword.toCharArray());
+            store.load(new FileInputStream(file), storePassword.toCharArray());
+
         } catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException e) {
             throw new IOException("Error loading Key Store.", e);
         }
+
         return store;
     }
 }

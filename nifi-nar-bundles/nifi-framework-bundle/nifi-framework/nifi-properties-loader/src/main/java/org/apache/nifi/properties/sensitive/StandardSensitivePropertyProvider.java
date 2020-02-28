@@ -18,11 +18,7 @@ package org.apache.nifi.properties.sensitive;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.nifi.properties.sensitive.aes.AESSensitivePropertyProvider;
-import org.apache.nifi.properties.sensitive.aws.kms.AWSKMSSensitivePropertyProvider;
-import org.apache.nifi.properties.sensitive.azure.keyvault.AzureKeyVaultSensitivePropertyProvider;
-import org.apache.nifi.properties.sensitive.hadoop.HadoopCredentialsSensitivePropertyProvider;
-import org.apache.nifi.properties.sensitive.hashicorp.vault.VaultSensitivePropertyProvider;
-import org.apache.nifi.properties.sensitive.keystore.KeyStoreWrappedSensitivePropertyProvider;
+import org.apache.nifi.spp.keystore.KeyStoreWrappedSensitivePropertyProvider;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,25 +61,25 @@ public class StandardSensitivePropertyProvider {
         if (StringUtils.isBlank(key)) {
             return null;
 
-        } else if (HadoopCredentialsSensitivePropertyProvider.isProviderFor(key)) {
-            logger.debug("StandardSensitivePropertyProvider selected specific Hadoop Credential provider for key: " + HadoopCredentialsSensitivePropertyProvider.toPrintableString(key));
-            return new HadoopCredentialsSensitivePropertyProvider(key);
-
-        } else if (AzureKeyVaultSensitivePropertyProvider.isProviderFor(key)) {
-            logger.debug("StandardSensitivePropertyProvider selected specific Azure Key Vault provider for key: " + AzureKeyVaultSensitivePropertyProvider.toPrintableString(key));
-            return new AzureKeyVaultSensitivePropertyProvider(key);
-
-        } else if (VaultSensitivePropertyProvider.isProviderFor(key)) {
-            logger.debug("StandardSensitivePropertyProvider selected specific HashiCorp Vault provider for key: " + VaultSensitivePropertyProvider.toPrintableString(key));
-            return new VaultSensitivePropertyProvider(key);
-
-        } else if (KeyStoreWrappedSensitivePropertyProvider.isProviderFor(key)) {
-            logger.debug("StandardSensitivePropertyProvider selected specific KeyStore provider for key: " + KeyStoreWrappedSensitivePropertyProvider.toPrintableString(key));
-            return new KeyStoreWrappedSensitivePropertyProvider(key);
-
-        } else if (AWSKMSSensitivePropertyProvider.isProviderFor(key)) {
-            logger.debug("StandardSensitivePropertyProvider selected specific AWS KMS provider for key: " + AWSKMSSensitivePropertyProvider.toPrintableString(key));
-            return new AWSKMSSensitivePropertyProvider(key);
+//        } else if (HadoopCredentialsSensitivePropertyProvider.isProviderFor(key)) {
+//            logger.debug("StandardSensitivePropertyProvider selected specific Hadoop Credential provider for key: " + HadoopCredentialsSensitivePropertyProvider.toPrintableString(key));
+//            return new HadoopCredentialsSensitivePropertyProvider(key);
+//
+//        } else if (AzureKeyVaultSensitivePropertyProvider.isProviderFor(key)) {
+//            logger.debug("StandardSensitivePropertyProvider selected specific Azure Key Vault provider for key: " + AzureKeyVaultSensitivePropertyProvider.toPrintableString(key));
+//            return new AzureKeyVaultSensitivePropertyProvider(key);
+//
+//        } else if (VaultSensitivePropertyProvider.isProviderFor(key)) {
+//            logger.debug("StandardSensitivePropertyProvider selected specific HashiCorp Vault provider for key: " + VaultSensitivePropertyProvider.toPrintableString(key));
+//            return new VaultSensitivePropertyProvider(key);
+//
+//        } else if (KeyStoreWrappedSensitivePropertyProvider.isProviderFor(key)) {
+//            logger.debug("StandardSensitivePropertyProvider selected specific KeyStore provider for key: " + KeyStoreWrappedSensitivePropertyProvider.toPrintableString(key));
+//            return new KeyStoreWrappedSensitivePropertyProvider(key);
+//
+//        } else if (AWSKMSSensitivePropertyProvider.isProviderFor(key)) {
+//            logger.debug("StandardSensitivePropertyProvider selected specific AWS KMS provider for key: " + AWSKMSSensitivePropertyProvider.toPrintableString(key));
+//            return new AWSKMSSensitivePropertyProvider(key);
 
         } else if (AESSensitivePropertyProvider.isProviderFor(key)) {
             logger.debug("StandardSensitivePropertyProvider selected specific AES provider for key: " + AESSensitivePropertyProvider.toPrintableString(key));
@@ -100,11 +96,13 @@ public class StandardSensitivePropertyProvider {
      * @return true if at least one provider handles scheme
      */
     public static boolean hasProviderFor(String scheme) {
-        return HadoopCredentialsSensitivePropertyProvider.isProviderFor(scheme)
-                || AzureKeyVaultSensitivePropertyProvider.isProviderFor(scheme)
-                || VaultSensitivePropertyProvider.isProviderFor(scheme)
-                || KeyStoreWrappedSensitivePropertyProvider.isProviderFor(scheme)
-                || AWSKMSSensitivePropertyProvider.isProviderFor(scheme)
+//        return HadoopCredentialsSensitivePropertyProvider.isProviderFor(scheme)
+//                || AzureKeyVaultSensitivePropertyProvider.isProviderFor(scheme)
+//                || VaultSensitivePropertyProvider.isProviderFor(scheme)
+//                || KeyStoreWrappedSensitivePropertyProvider.isProviderFor(scheme)
+//                || AWSKMSSensitivePropertyProvider.isProviderFor(scheme)
+//                || AESSensitivePropertyProvider.isProviderFor(scheme);
+        return KeyStoreWrappedSensitivePropertyProvider.isProviderFor(scheme)
                 || AESSensitivePropertyProvider.isProviderFor(scheme);
     }
 
