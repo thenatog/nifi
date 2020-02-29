@@ -35,7 +35,6 @@
         <module>nifi-toolkit</module>
         <module>nifi-docker</module>
         <module>nifi-system-tests</module>
-        <module>nifi-sensitive-property-providers</module>
     </modules>
     <url>https://nifi.apache.org</url>
     <organization>
