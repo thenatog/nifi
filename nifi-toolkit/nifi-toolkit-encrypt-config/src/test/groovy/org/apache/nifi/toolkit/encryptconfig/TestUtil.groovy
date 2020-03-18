@@ -18,8 +18,7 @@ package org.apache.nifi.toolkit.encryptconfig
 
 
 import org.apache.commons.lang3.SystemUtils
-import org.apache.nifi.properties.sensitive.SensitivePropertyProvider
-import org.apache.nifi.properties.sensitive.StandardSensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.property.provider.spp.StandardSensitivePropertyProvider
 import org.apache.nifi.toolkit.encryptconfig.util.NiFiRegistryAuthorizersXmlEncryptor
 import org.apache.nifi.toolkit.encryptconfig.util.NiFiRegistryIdentityProvidersXmlEncryptor
 
