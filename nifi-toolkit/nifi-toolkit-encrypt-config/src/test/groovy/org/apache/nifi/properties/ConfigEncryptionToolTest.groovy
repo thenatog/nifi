@@ -24,10 +24,11 @@ import org.apache.log4j.AppenderSkeleton
 import org.apache.log4j.spi.LoggingEvent
 import org.apache.nifi.encrypt.StringEncryptor
 import org.apache.nifi.properties.sensitive.ProtectedNiFiProperties
-import org.apache.nifi.properties.sensitive.SensitivePropertyProtectionException
-import org.apache.nifi.properties.sensitive.SensitivePropertyProvider
-import org.apache.nifi.properties.sensitive.StandardSensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.property.provider.spp.SensitivePropertyProtectionException
+import org.apache.nifi.properties.sensitive.property.provider.spp.SensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.property.provider.spp.StandardSensitivePropertyProvider
 import org.apache.nifi.toolkit.tls.commandLine.CommandLineParseException
+import org.apache.nifi.properties.sensitive.property.provider.keystore.KeyStoreWrappedSensitivePropertyProvider
 import org.apache.nifi.util.NiFiProperties
 import org.apache.nifi.util.console.TextDevice
 import org.apache.nifi.util.console.TextDevices
@@ -5198,50 +5199,50 @@ class ConfigEncryptionToolTest extends GroovyTestCase {
      *
      * @throws Exception
      */
-//    @Test
-//    void testShouldUseSPP() throws Exception {
-//        System.setProperty("keystore.file", keyStorePath)
-//        String randomValue = getRandomHex(32)
-//        String key = KeyStoreWrappedSensitivePropertyProvider.formatForType(keyStoreType, keyStoreKeyAlias)
-//        ConfigEncryptionTool tool = new ConfigEncryptionTool()
-//        SensitivePropertyProvider spp = StandardSensitivePropertyProvider.fromKey(key)
-//
-//        // Here we're verifying that the SPP works by using it directly:
-//        String verificationValue = getRandomHex(64)
-//        assert spp.unprotect(spp.protect(verificationValue)) == verificationValue
-//
-//        // We show the tool parses these types of keys:
-//        File propsFile = tmpDir.newFile()
-//        propsFile.write(String.format(new String(new File("src/test/resources/nifi_with_key_template.properties").readBytes()), randomValue))
-//        tool.parse(["-k", key, "-n", propsFile.absolutePath] as String[])
-//        // need to do migration key too
-//
-//        // This shows the tool accepted our SPP key:
-//        assert tool.keyOrKeyId == key
-//
-//        // This shows we can load raw props with the SPP key:
-//        NiFiProperties plainProperties = tool.loadNiFiProperties()
-//        assert plainProperties
-//        assert plainProperties.size() > 0
-//        assert plainProperties.getProperty("nifi.sensitive.props.key") == randomValue
-//
-//        // This shows our value is encrypted:
-//        NiFiProperties encryptedProperties = tool.encryptSensitiveProperties(plainProperties, key)
-//        assert encryptedProperties.getProperty("nifi.sensitive.props.key") != randomValue
-//        assert encryptedProperties.getProperty("nifi.sensitive.props.key.protected") == key
-//
-//        // This shows our value is protected:
-//        ProtectedNiFiProperties finalProperties = new ProtectedNiFiProperties(encryptedProperties, key)
-//        assert finalProperties.hasProtectedKeys()
-//        assert finalProperties.getProperty("nifi.sensitive.props.key") != randomValue
-//        assert finalProperties.getProperty("nifi.sensitive.props.key.protected") == key
-//
-//        // This shows our value is re-read from disk and decrypted as expected:
-//        ProtectedNiFiProperties reloadedProperties = NiFiPropertiesLoader.withKey(key).readProtectedPropertiesFromDisk(propsFile)
-//        assert !reloadedProperties.hasProtectedKeys()
-//        assert reloadedProperties.getProperty("nifi.sensitive.props.key") == randomValue
-//        assert reloadedProperties.getProperty("nifi.sensitive.props.key.protected") != key
-//    }
+    @Test
+    void testShouldUseSPP() throws Exception {
+        System.setProperty("keystore.file", keyStorePath)
+        String randomValue = getRandomHex(32)
+        String key = KeyStoreWrappedSensitivePropertyProvider.formatForType(keyStoreType, keyStoreKeyAlias)
+        ConfigEncryptionTool tool = new ConfigEncryptionTool()
+        SensitivePropertyProvider spp = StandardSensitivePropertyProvider.fromKey(key)
+
+        // Here we're verifying that the SPP works by using it directly:
+        String verificationValue = getRandomHex(64)
+        assert spp.unprotect(spp.protect(verificationValue)) == verificationValue
+
+        // We show the tool parses these types of keys:
+        File propsFile = tmpDir.newFile()
+        propsFile.write(String.format(new String(new File("src/test/resources/nifi_with_key_template.properties").readBytes()), randomValue))
+        tool.parse(["-k", key, "-n", propsFile.absolutePath] as String[])
+        // need to do migration key too
+
+        // This shows the tool accepted our SPP key:
+        assert tool.keyOrKeyId == key
+
+        // This shows we can load raw props with the SPP key:
+        NiFiProperties plainProperties = tool.loadNiFiProperties()
+        assert plainProperties
+        assert plainProperties.size() > 0
+        assert plainProperties.getProperty("nifi.sensitive.props.key") == randomValue
+
+        // This shows our value is encrypted:
+        NiFiProperties encryptedProperties = tool.encryptSensitiveProperties(plainProperties, key)
+        assert encryptedProperties.getProperty("nifi.sensitive.props.key") != randomValue
+        assert encryptedProperties.getProperty("nifi.sensitive.props.key.protected") == key
+
+        // This shows our value is protected:
+        ProtectedNiFiProperties finalProperties = new ProtectedNiFiProperties(encryptedProperties, key)
+        assert finalProperties.hasProtectedKeys()
+        assert finalProperties.getProperty("nifi.sensitive.props.key") != randomValue
+        assert finalProperties.getProperty("nifi.sensitive.props.key.protected") == key
+
+        // This shows our value is re-read from disk and decrypted as expected:
+        ProtectedNiFiProperties reloadedProperties = NiFiPropertiesLoader.withKey(key).readProtectedPropertiesFromDisk(propsFile)
+        assert !reloadedProperties.hasProtectedKeys()
+        assert reloadedProperties.getProperty("nifi.sensitive.props.key") == randomValue
+        assert reloadedProperties.getProperty("nifi.sensitive.props.key.protected") != key
+    }
 
     static boolean compareXMLFragments(String expectedXML, String actualXML) {
         Diff diffSimilar = DiffBuilder.compare(expectedXML).withTest(actualXML)

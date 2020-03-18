@@ -17,8 +17,8 @@
 package org.apache.nifi.toolkit.encryptconfig
 
 import org.apache.nifi.properties.NiFiPropertiesLoader
-import org.apache.nifi.properties.sensitive.StandardSensitivePropertyProvider
-import org.apache.nifi.properties.sensitive.SensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.property.provider.spp.StandardSensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.property.provider.spp.SensitivePropertyProvider
 import org.apache.nifi.toolkit.encryptconfig.util.BootstrapUtil
 import org.apache.nifi.util.NiFiProperties
 import org.bouncycastle.jce.provider.BouncyCastleProvider

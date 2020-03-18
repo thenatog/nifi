@@ -16,7 +16,7 @@
  */
 package org.apache.nifi.properties.sensitive;
 
-import org.apache.nifi.spp.keystore.KeyStoreProvider;
+import org.apache.nifi.properties.sensitive.property.provider.keystore.KeyStoreProvider;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

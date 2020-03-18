@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.nifi.spp.keystore;
+package org.apache.nifi.properties.sensitive.property.provider.keystore;
 
 import java.io.IOException;
 import java.security.KeyStore;

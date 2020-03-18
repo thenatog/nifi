@@ -27,6 +27,7 @@ import java.util.Properties;
 import javax.crypto.Cipher;
 
 import org.apache.nifi.properties.sensitive.ProtectedNiFiProperties;
+import org.apache.nifi.properties.sensitive.SensitivePropertyProvider;
 import org.apache.nifi.security.kms.CryptoUtils;
 import org.apache.nifi.util.NiFiProperties;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -62,7 +63,7 @@ public class NiFiPropertiesLoader {
 
     /**
      * Sets the hexadecimal key used to unprotect properties encrypted with
-     * {@link org.apache.nifi.properties.sensitive.SensitivePropertyProvider}. If the key has already been set,
+     * {@link SensitivePropertyProvider}. If the key has already been set,
      * calling this method will throw a {@link RuntimeException}.
      *
      * @param keyHex the key in hexadecimal format
@@ -184,7 +185,7 @@ public class NiFiPropertiesLoader {
     /**
      * Returns an instance of {@link NiFiProperties} loaded from the provided
      * {@link File}. If any properties are protected, will attempt to use the
-     * appropriate {@link org.apache.nifi.properties.sensitive.SensitivePropertyProvider} to unprotect them
+     * appropriate {@link SensitivePropertyProvider} to unprotect them
      * transparently.
      *
      * @param file the File containing the serialized properties

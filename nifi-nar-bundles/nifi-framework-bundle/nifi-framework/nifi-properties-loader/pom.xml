@@ -25,9 +25,6 @@
         performs any decryption/retrieval of sensitive configuration properties.
     </description>
     <packaging>jar</packaging>
-    <properties>
-        <aws-java-sdk-version>1.11.461</aws-java-sdk-version>
-    </properties>
     <dependencies>
         <dependency>
             <groupId>org.apache.nifi</groupId>

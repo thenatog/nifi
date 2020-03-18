@@ -17,7 +17,7 @@
 package org.apache.nifi.properties
 
 import org.apache.nifi.properties.sensitive.StandardSensitivePropertyProvider
-import org.apache.nifi.properties.sensitive.aes.AESSensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.property.provider.aes.AESSensitivePropertyProvider
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.Before
 import org.junit.BeforeClass

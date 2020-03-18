@@ -14,15 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.nifi.spp.keystore;
+package org.apache.nifi.properties.sensitive.property.provider.keystore;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.nifi.properties.sensitive.ExternalProperties;
+import org.apache.nifi.properties.sensitive.property.provider.aes.AESSensitivePropertyProvider;
 import org.apache.nifi.properties.sensitive.SensitivePropertyConfigurationException;
 import org.apache.nifi.properties.sensitive.SensitivePropertyProtectionException;
 import org.apache.nifi.properties.sensitive.SensitivePropertyProvider;
 import org.apache.nifi.properties.sensitive.StandardExternalPropertyLookup;
-import org.apache.nifi.properties.sensitive.aes.AESSensitivePropertyProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
