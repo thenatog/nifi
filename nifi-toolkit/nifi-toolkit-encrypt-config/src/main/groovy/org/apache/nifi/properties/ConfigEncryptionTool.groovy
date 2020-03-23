@@ -29,9 +29,9 @@ import org.apache.commons.cli.ParseException
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.io.IOUtils
 import org.apache.nifi.properties.sensitive.ProtectedNiFiProperties
-import org.apache.nifi.properties.sensitive.property.provider.spp.SensitivePropertyProtectionException
-import org.apache.nifi.properties.sensitive.property.provider.spp.SensitivePropertyProvider
-import org.apache.nifi.properties.sensitive.property.provider.spp.StandardSensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.SensitivePropertyProtectionException
+import org.apache.nifi.properties.sensitive.SensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.StandardSensitivePropertyProvider
 import org.apache.nifi.properties.sensitive.property.provider.aes.AESSensitivePropertyProvider
 import org.apache.nifi.toolkit.tls.commandLine.CommandLineParseException
 import org.apache.nifi.toolkit.tls.commandLine.ExitCode

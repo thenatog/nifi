@@ -19,7 +19,7 @@ package org.apache.nifi.toolkit.encryptconfig
 import groovy.cli.commons.CliBuilder
 import org.apache.nifi.toolkit.encryptconfig.util.BootstrapUtil
 import org.apache.nifi.toolkit.encryptconfig.util.ToolUtilities
-import org.apache.nifi.properties.sensitive.property.provider.spp.StandardSensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.StandardSensitivePropertyProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

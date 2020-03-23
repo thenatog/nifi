@@ -18,7 +18,7 @@ package org.apache.nifi.web.security.spring
 
 import org.apache.nifi.authentication.generated.Property
 import org.apache.nifi.authentication.generated.Provider
-import org.apache.nifi.properties.sensitive.property.provider.spp.StandardSensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.StandardSensitivePropertyProvider
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.After
 import org.junit.AfterClass

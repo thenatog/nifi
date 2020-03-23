@@ -20,7 +20,7 @@ import ch.qos.logback.classic.spi.LoggingEvent
 import ch.qos.logback.core.AppenderBase
 import org.apache.nifi.properties.NiFiPropertiesLoader
 import org.apache.nifi.properties.StandardNiFiProperties
-import org.apache.nifi.properties.sensitive.property.provider.spp.StandardSensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.StandardSensitivePropertyProvider
 import org.apache.nifi.util.NiFiProperties
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.After
