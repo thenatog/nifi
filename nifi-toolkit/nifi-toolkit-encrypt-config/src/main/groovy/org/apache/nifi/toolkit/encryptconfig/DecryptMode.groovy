@@ -19,8 +19,8 @@ package org.apache.nifi.toolkit.encryptconfig
 import groovy.cli.commons.CliBuilder
 import groovy.cli.commons.OptionAccessor
 import org.apache.commons.cli.HelpFormatter
-import org.apache.nifi.properties.sensitive.property.provider.spp.SensitivePropertyProvider
-import org.apache.nifi.properties.sensitive.property.provider.spp.StandardSensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.SensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.StandardSensitivePropertyProvider
 import org.apache.nifi.toolkit.encryptconfig.util.BootstrapUtil
 import org.apache.nifi.toolkit.encryptconfig.util.PropertiesEncryptor
 import org.apache.nifi.toolkit.encryptconfig.util.ToolUtilities

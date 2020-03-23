@@ -20,7 +20,7 @@ import groovy.io.GroovyPrintWriter
 import org.apache.commons.configuration2.PropertiesConfiguration
 import org.apache.commons.configuration2.PropertiesConfigurationLayout
 import org.apache.commons.configuration2.builder.fluent.Configurations
-import org.apache.nifi.properties.sensitive.property.provider.spp.SensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.SensitivePropertyProvider
 import org.apache.nifi.util.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

@@ -24,9 +24,9 @@ import org.apache.log4j.AppenderSkeleton
 import org.apache.log4j.spi.LoggingEvent
 import org.apache.nifi.encrypt.StringEncryptor
 import org.apache.nifi.properties.sensitive.ProtectedNiFiProperties
-import org.apache.nifi.properties.sensitive.property.provider.spp.SensitivePropertyProtectionException
-import org.apache.nifi.properties.sensitive.property.provider.spp.SensitivePropertyProvider
-import org.apache.nifi.properties.sensitive.property.provider.spp.StandardSensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.SensitivePropertyProtectionException
+import org.apache.nifi.properties.sensitive.SensitivePropertyProvider
+import org.apache.nifi.properties.sensitive.StandardSensitivePropertyProvider
 import org.apache.nifi.toolkit.tls.commandLine.CommandLineParseException
 import org.apache.nifi.properties.sensitive.property.provider.keystore.KeyStoreWrappedSensitivePropertyProvider
 import org.apache.nifi.util.NiFiProperties
