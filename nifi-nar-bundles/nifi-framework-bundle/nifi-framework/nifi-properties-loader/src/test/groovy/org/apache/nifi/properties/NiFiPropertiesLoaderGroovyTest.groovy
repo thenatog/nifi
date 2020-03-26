@@ -132,18 +132,6 @@ class NiFiPropertiesLoaderGroovyTest extends GroovyTestCase {
     }
 
     @Test
-    void testShouldInitializeSensitivePropertyProviderFactory() throws Exception {
-        // Arrange
-        NiFiPropertiesLoader niFiPropertiesLoader = new NiFiPropertiesLoader()
-
-        // Act
-        niFiPropertiesLoader.initializeSensitivePropertyProviderFactory()
-
-        // Assert
-        assert niFiPropertiesLoader.@sensitivePropertyProviderFactory
-    }
-
-    @Test
     void testShouldLoadUnprotectedPropertiesFromFile() throws Exception {
         // Arrange
         File unprotectedFile = new File("src/test/resources/conf/nifi.properties")
