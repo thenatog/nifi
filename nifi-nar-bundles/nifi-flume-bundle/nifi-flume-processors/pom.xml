@@ -25,7 +25,7 @@
 
     <properties>
         <hadoop.version>2.7.3</hadoop.version>
-        <flume.version>1.6.0</flume.version>
+        <flume.version>1.8.0</flume.version>
     </properties>
 
     <dependencies>
