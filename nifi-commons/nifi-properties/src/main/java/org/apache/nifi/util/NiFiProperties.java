@@ -1005,7 +1005,7 @@ public abstract class NiFiProperties {
     public String getOidcClaimIdentifyingUser() {
         return getProperty(SECURITY_USER_OIDC_CLAIM_IDENTIFYING_USER, "email").trim();
     }
-    
+
     public boolean shouldSendServerVersion() {
         return Boolean.parseBoolean(getProperty(WEB_SHOULD_SEND_SERVER_VERSION, DEFAULT_WEB_SHOULD_SEND_SERVER_VERSION));
     }
