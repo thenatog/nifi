@@ -570,6 +570,7 @@ public class JettyServer implements NiFiServer, ExtensionUiLoader {
         serverClasses.remove("org.slf4j.");
         webappContext.setServerClasses(serverClasses.toArray(new String[0]));
         webappContext.setDefaultsDescriptor(WEB_DEFAULTS_XML);
+        webappContext.getMimeTypes().addMimeMapping("ttf", "font/ttf");
 
         // get the temp directory for this webapp
         File tempDir = new File(props.getWebWorkingDirectory(), warFile.getName());
