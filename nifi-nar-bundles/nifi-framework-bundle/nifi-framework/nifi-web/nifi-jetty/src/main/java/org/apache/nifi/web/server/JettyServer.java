@@ -85,6 +85,7 @@ import org.apache.nifi.web.NiFiWebConfigurationContext;
 import org.apache.nifi.web.UiExtensionType;
 import org.apache.nifi.web.security.headers.ContentSecurityPolicyFilter;
 import org.apache.nifi.web.security.headers.StrictTransportSecurityFilter;
+import org.apache.nifi.web.security.headers.XContentTypeOptionsFilter;
 import org.apache.nifi.web.security.headers.XFrameOptionsFilter;
 import org.apache.nifi.web.security.headers.XSSProtectionFilter;
 import org.apache.nifi.web.security.requests.ContentLengthFilter;
@@ -592,7 +593,13 @@ public class JettyServer implements NiFiServer, ExtensionUiLoader {
 
         // add HTTP security headers to all responses
         final String ALL_PATHS = "/*";
-        ArrayList<Class<? extends Filter>> filters = new ArrayList<>(Arrays.asList(XFrameOptionsFilter.class, ContentSecurityPolicyFilter.class, XSSProtectionFilter.class));
+        ArrayList<Class<? extends Filter>> filters =
+                new ArrayList<>(Arrays.asList(
+                        XFrameOptionsFilter.class,
+                        ContentSecurityPolicyFilter.class,
+                        XSSProtectionFilter.class,
+                        XContentTypeOptionsFilter.class));
+
         if(props.isHTTPSConfigured()) {
             filters.add(StrictTransportSecurityFilter.class);
         }
