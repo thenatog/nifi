@@ -51,6 +51,8 @@ import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -73,6 +75,7 @@ public class TlsCertificateAuthorityTest {
     private ByteArrayOutputStream clientTrustStoreOutputStream;
     private ByteArrayOutputStream serverConfigFileOutputStream;
     private ByteArrayOutputStream clientConfigFileOutputStream;
+    private List<String> subjectAlternativeNames;
 
     @Before
     public void setup() throws FileNotFoundException {
@@ -87,6 +90,7 @@ public class TlsCertificateAuthorityTest {
         clientTrustStoreOutputStream = new ByteArrayOutputStream();
         serverConfigFileOutputStream = new ByteArrayOutputStream();
         clientConfigFileOutputStream = new ByteArrayOutputStream();
+        subjectAlternativeNames = Arrays.asList("nifi.apache.org");
 
         String myTestTokenUseSomethingStronger = "myTestTokenUseSomethingStronger";
         int port = availablePort();
@@ -106,6 +110,7 @@ public class TlsCertificateAuthorityTest {
         clientConfig.setKeyStore(clientKeyStore);
         clientConfig.setTrustStore(clientTrustStore);
         clientConfig.setToken(myTestTokenUseSomethingStronger);
+        clientConfig.setDomainAlternativeNames(subjectAlternativeNames);
         clientConfig.setPort(port);
         clientConfig.setKeySize(2048);
         clientConfig.initDefaults();
