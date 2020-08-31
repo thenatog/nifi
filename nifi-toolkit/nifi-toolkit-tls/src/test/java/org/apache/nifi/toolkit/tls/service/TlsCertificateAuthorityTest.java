@@ -51,7 +51,10 @@ import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateParsingException;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -75,7 +78,7 @@ public class TlsCertificateAuthorityTest {
     private ByteArrayOutputStream clientTrustStoreOutputStream;
     private ByteArrayOutputStream serverConfigFileOutputStream;
     private ByteArrayOutputStream clientConfigFileOutputStream;
-    private List<String> subjectAlternativeNames;
+    private String subjectAlternativeName;
 
     @Before
     public void setup() throws FileNotFoundException {
@@ -90,7 +93,7 @@ public class TlsCertificateAuthorityTest {
         clientTrustStoreOutputStream = new ByteArrayOutputStream();
         serverConfigFileOutputStream = new ByteArrayOutputStream();
         clientConfigFileOutputStream = new ByteArrayOutputStream();
-        subjectAlternativeNames = Arrays.asList("nifi.apache.org");
+        subjectAlternativeName = "nifi.apache.org";
 
         String myTestTokenUseSomethingStronger = "myTestTokenUseSomethingStronger";
         int port = availablePort();
@@ -110,7 +113,7 @@ public class TlsCertificateAuthorityTest {
         clientConfig.setKeyStore(clientKeyStore);
         clientConfig.setTrustStore(clientTrustStore);
         clientConfig.setToken(myTestTokenUseSomethingStronger);
-        clientConfig.setDomainAlternativeNames(subjectAlternativeNames);
+        clientConfig.setDomainAlternativeNames(Arrays.asList(subjectAlternativeName));
         clientConfig.setPort(port);
         clientConfig.setKeySize(2048);
         clientConfig.initDefaults();
@@ -245,6 +248,9 @@ public class TlsCertificateAuthorityTest {
         certificateChain[0].verify(caCertificate.getPublicKey());
         assertPrivateAndPublicKeyMatch(clientPrivateKeyEntry.getPrivateKey(), certificateChain[0].getPublicKey());
 
+        // Does the certificate contain the SAN we defined in the client config?
+        assert(isSANPresent(certificateChain[0]));
+
         KeyStore clientTrustStore = KeyStoreUtils.getTrustStore(KeystoreType.JKS.toString());
         clientTrustStore.load(new ByteArrayInputStream(clientTrustStoreOutputStream.toByteArray()), clientConfig.getTrustStorePassword().toCharArray());
         assertEquals(caCertificate, clientTrustStore.getCertificate(TlsToolkitStandalone.NIFI_CERT));
@@ -260,6 +266,22 @@ public class TlsCertificateAuthorityTest {
         verify.initVerify(publicKey);
         verify.update(bytes);
         verify.verify(signature.sign());
+    }
+
+    private boolean isSANPresent(Certificate cert) {
+        Iterator<List<?>> iterator = null;
+        try {
+            iterator = ((X509Certificate) cert).getSubjectAlternativeNames().iterator();
+        } catch (CertificateParsingException e) {
+            e.printStackTrace();
+        }
+        boolean containsSAN = false;
+        while(iterator.hasNext()) {
+            if(iterator.next().contains(subjectAlternativeName)) {
+                containsSAN = true;
+            }
+        }
+        return containsSAN;
     }
 
     /**
