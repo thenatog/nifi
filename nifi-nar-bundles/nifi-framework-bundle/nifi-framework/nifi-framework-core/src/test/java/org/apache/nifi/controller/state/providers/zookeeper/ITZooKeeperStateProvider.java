@@ -32,6 +32,8 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 
 import javax.net.ssl.SSLContext;
@@ -49,8 +51,7 @@ import static org.apache.nifi.leader.election.TestSecureClientZooKeeperFactory.c
 
 public class ITZooKeeperStateProvider extends AbstractTestStateProvider {
 
-    private static final String NETTY_SERVER_CNXN_FACTORY =
-            "org.apache.zookeeper.server.NettyServerCnxnFactory";
+    private static final Logger logger = LoggerFactory.getLogger(ITZooKeeperStateProvider.class);
 
     private volatile StateProvider provider;
     private volatile ZooKeeperServer zkServer;
@@ -231,6 +232,7 @@ public class ITZooKeeperStateProvider extends AbstractTestStateProvider {
                 Thread.sleep(1000L);
             } catch (final Exception e) {
                 e.printStackTrace();
+                logger.error("Something went wrong attempting to set the state in testStateTooLargeExceptionThrownOnSetState()");
                 Assert.fail("Expected StateTooLargeException but " + e.getClass() + " was thrown", e);
             }
         }
@@ -273,7 +275,7 @@ public class ITZooKeeperStateProvider extends AbstractTestStateProvider {
         } catch (final StateTooLargeException stle) {
             // expected behavior.
         } catch (final Exception e) {
-            e.printStackTrace();
+            logger.error("Something went wrong in attempting to get the state in testStateTooLargeExceptionThrownOnReplace()");
             Assert.fail("Expected StateTooLargeException", e);
         }
     }

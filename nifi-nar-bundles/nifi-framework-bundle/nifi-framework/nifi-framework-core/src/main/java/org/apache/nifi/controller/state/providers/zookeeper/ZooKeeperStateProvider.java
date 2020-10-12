@@ -76,9 +76,6 @@ public class ZooKeeperStateProvider extends AbstractStateProvider {
 
     private static final int ONE_MB = 1024 * 1024;
 
-    private static String JAVA_KEYSTORE = "JKS";
-    private static String PKCS_KEYSTORE = "PKCS12";
-
     static final AllowableValue OPEN_TO_WORLD = new AllowableValue("Open", "Open", "ZNodes will be open to any ZooKeeper client.");
     static final AllowableValue CREATOR_ONLY = new AllowableValue("CreatorOnly", "CreatorOnly",
         "ZNodes will be accessible only by the creator. The creator will have full access to create, read, write, delete, and administer the ZNodes.");
@@ -139,8 +136,8 @@ public class ZooKeeperStateProvider extends AbstractStateProvider {
     static final PropertyDescriptor KEYSTORE_TYPE = new PropertyDescriptor.Builder()
             .name("Keystore Type")
             .description("Specifies the keystore type")
-            .allowableValues(JAVA_KEYSTORE, PKCS_KEYSTORE)
-            .defaultValue(JAVA_KEYSTORE)
+            .allowableValues(KeystoreType.JKS.getType(), KeystoreType.PKCS12.getType())
+            .defaultValue(KeystoreType.JKS.getType())
             .required(false)
             .build();
 
@@ -161,8 +158,8 @@ public class ZooKeeperStateProvider extends AbstractStateProvider {
     static final PropertyDescriptor TRUSTSTORE_TYPE = new PropertyDescriptor.Builder()
             .name("Truststore Type")
             .description("Specifies the truststore type")
-            .allowableValues(JAVA_KEYSTORE, PKCS_KEYSTORE)
-            .defaultValue(JAVA_KEYSTORE)
+            .allowableValues(KeystoreType.JKS.getType(), KeystoreType.PKCS12.getType())
+            .defaultValue(KeystoreType.JKS.getType())
             .required(false)
             .build();
 
@@ -184,7 +181,7 @@ public class ZooKeeperStateProvider extends AbstractStateProvider {
     private String trustStorePassword;
     private String trustStoreType;
 
-    ZooKeeperClientConfig zooKeeperClientConfig;
+    private ZooKeeperClientConfig zooKeeperClientConfig;
 
     private boolean clientSecure;
 
@@ -237,7 +234,7 @@ public class ZooKeeperStateProvider extends AbstractStateProvider {
         setPropertyIfNotNull(properties, NiFiProperties.ZOOKEEPER_SECURITY_TRUSTSTORE_TYPE, trustStoreType);
 
         if(keystorePropertiesAreValid(keyStorePath, keyStoreType, keyStorePassword)) {
-            properties.setProperty(NiFiProperties.ZOOKEEPER_CLIENT_SECURE, "true");
+            properties.setProperty(NiFiProperties.ZOOKEEPER_CLIENT_SECURE, Boolean.TRUE.toString());
         }
 
         zooKeeperClientConfig = ZooKeeperClientConfig.createConfig(new StandardNiFiProperties(properties));
@@ -260,8 +257,7 @@ public class ZooKeeperStateProvider extends AbstractStateProvider {
             try {
                 return KeyStoreUtils.isStoreValid(Paths.get(keyStorePath).toUri().toURL(), KeystoreType.valueOf(keyStoreType), keyStorePassword.toCharArray());
             } catch (MalformedURLException e) {
-                logger.error("ZooKeeperStateProvider keyStorePath " + keyStorePath + " is not a valid file URL or could not be found.");
-                e.printStackTrace();
+                logger.error("ZooKeeperStateProvider keyStorePath " + keyStorePath + " is not a valid file URL or could not be found.", e);
                 return false;
             }
         } else {
@@ -298,8 +294,7 @@ public class ZooKeeperStateProvider extends AbstractStateProvider {
                         }
                     }, true);
                 } catch (Exception e) {
-                    System.out.println("Secure Zookeeper configuration failed!");
-                    e.printStackTrace();
+                    logger.error("Secure Zookeeper configuration failed!", e);
                     invalidateClient();
                 }
             } else {
