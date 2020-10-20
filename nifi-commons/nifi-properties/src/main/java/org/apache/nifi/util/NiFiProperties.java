@@ -445,6 +445,20 @@ public abstract class NiFiProperties {
 
     }
 
+    public Boolean isZooKeeperSecure() {
+        return Boolean.valueOf(getProperty(NiFiProperties.ZOOKEEPER_CLIENT_SECURE));
+    }
+
+    public Boolean isZooKeeperTlsConfigurationPresent() {
+        return isZooKeeperSecure()
+            && StringUtils.isNotBlank(getProperty(NiFiProperties.ZOOKEEPER_SECURITY_KEYSTORE))
+            && getProperty(NiFiProperties.ZOOKEEPER_SECURITY_KEYSTORE_PASSWD) != null
+            && StringUtils.isNotBlank(getProperty(NiFiProperties.ZOOKEEPER_SECURITY_KEYSTORE_TYPE))
+            && StringUtils.isNotBlank(getProperty(NiFiProperties.ZOOKEEPER_SECURITY_TRUSTSTORE))
+            && getProperty(NiFiProperties.ZOOKEEPER_SECURITY_TRUSTSTORE_PASSWD) != null
+            && StringUtils.isNotBlank(getProperty(NiFiProperties.ZOOKEEPER_SECURITY_TRUSTSTORE_TYPE));
+    }
+
     /**
      * @return True if property value is 'true'; False otherwise.
      */
