@@ -24,7 +24,7 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.nifi.util.NiFiProperties;
 import org.apache.nifi.properties.StandardNiFiProperties;
 import org.apache.nifi.controller.cluster.ZooKeeperClientConfig;
-import org.apache.nifi.controller.leader.election.CuratorLeaderElectionManager.SecureClientZooKeeperFactory;
+import org.apache.nifi.controller.cluster.SecureClientZooKeeperFactory;
 import org.apache.nifi.security.util.CertificateUtils;
 
 import org.apache.zookeeper.common.ClientX509Util;
@@ -35,9 +35,6 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -57,6 +54,9 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class TestSecureClientZooKeeperFactory {
 
@@ -153,11 +153,6 @@ public class TestSecureClientZooKeeperFactory {
         }
     }
 
-    @Test
-    public void testValidCnxnSocketName() {
-        assertEquals("org.apache.zookeeper.ClientCnxnSocketNetty", SecureClientZooKeeperFactory.NETTY_CLIENT_CNXN_SOCKET);
-    }
-
     @Test(timeout = 30_000)
     public void testServerCreatePath() throws Exception {
         final ZooKeeperClientConfig zkClientConfig =
@@ -183,8 +178,8 @@ public class TestSecureClientZooKeeperFactory {
     }
 
     public static ServerCnxnFactory createAndStartServer(final Path dataDir,
-                                                         final Path tempDir, final int clientPort, final String keyStore,
-                                                         final String keyStorePassword, final String trustStore,
+                                                         final Path tempDir, final int clientPort, final Path keyStore,
+                                                         final String keyStorePassword, final Path trustStore,
                                                          final String trustStorePassword) throws IOException, InterruptedException {
 
         final ClientX509Util x509Util = new ClientX509Util();
@@ -221,7 +216,7 @@ public class TestSecureClientZooKeeperFactory {
         return new StandardNiFiProperties(properties);
     }
 
-    private static X509Certificate createKeyStore(final String alias,
+    public static X509Certificate createKeyStore(final String alias,
          final String password, final Path path, final String keyStoreType)
          throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
 
@@ -243,7 +238,7 @@ public class TestSecureClientZooKeeperFactory {
          }
      }
 
-     private static void createTrustStore(final X509Certificate cert,
+    public static void createTrustStore(final X509Certificate cert,
           final String alias, final String password, final Path path, final String keyStoreType)
           throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException {
 

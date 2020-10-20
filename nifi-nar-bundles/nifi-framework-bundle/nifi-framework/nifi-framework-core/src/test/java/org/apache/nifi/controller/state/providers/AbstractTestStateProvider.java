@@ -43,7 +43,7 @@ import org.junit.Test;
  * </p>
  */
 public abstract class AbstractTestStateProvider {
-    protected final String componentId = "111111111-1111-1111-1111-111111111111";
+    protected final static String componentId = "111111111-1111-1111-1111-111111111111";
 
 
     @Test

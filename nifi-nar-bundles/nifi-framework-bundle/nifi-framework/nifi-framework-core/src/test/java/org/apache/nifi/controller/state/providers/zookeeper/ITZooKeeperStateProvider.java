@@ -16,6 +16,7 @@
  */
 package org.apache.nifi.controller.state.providers.zookeeper;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.curator.test.InstanceSpec;
 import org.apache.nifi.attribute.expression.language.StandardPropertyValue;
 import org.apache.nifi.components.PropertyDescriptor;
@@ -27,6 +28,7 @@ import org.apache.nifi.controller.state.providers.AbstractTestStateProvider;
 import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.mock.MockComponentLogger;
 import org.apache.nifi.parameter.ParameterLookup;
+import org.apache.nifi.util.NiFiProperties;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.After;
@@ -37,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 
 import javax.net.ssl.SSLContext;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,29 +64,32 @@ public class ITZooKeeperStateProvider extends AbstractTestStateProvider {
     private static int clientPort;
     private static ServerCnxnFactory serverConnectionFactory;
 
-    private static final String CLIENT_KEYSTORE = "src/test/resources/TestSecureClientZooKeeperFactory/client.keystore.p12";
-    private static final String CLIENT_TRUSTSTORE = "src/test/resources/TestSecureClientZooKeeperFactory/client.truststore.p12";
+    private static final String CLIENT_KEYSTORE = "src/test/resources/localhost-ks.jks";
+    private static final String CLIENT_TRUSTSTORE = "src/test/resources/localhost-ts.jks";
     private static final String CLIENT_KEYSTORE_TYPE = "JKS";
     private static final String CLIENT_TRUSTSTORE_TYPE = "JKS";
-    private static final String SERVER_KEYSTORE = "src/test/resources/TestSecureClientZooKeeperFactory/server.keystore.p12";
-    private static final String SERVER_TRUSTSTORE = "src/test/resources/TestSecureClientZooKeeperFactory/server.truststore.p12";
-    private static final String TEST_PASSWORD = "testpass";
+    private static final String SERVER_KEYSTORE = "src/test/resources/localhost-ks.jks";
+    private static final String SERVER_TRUSTSTORE = "src/test/resources/localhost-ts.jks";
+    private static final String KEYSTORE_PASSWORD = "OI7kMpWzzVNVx/JGhTL/0uO4+PWpGJ46uZ/pfepbkwI";
+    private static final String TRUSTSTORE_PASSWORD = "wAOR0nQJ2EXvOP0JZ2EaqA/n7W69ILS4sWAHghmIWCc";
+
 
     static {
         defaultProperties.put(ZooKeeperStateProvider.SESSION_TIMEOUT, "15 secs");
         defaultProperties.put(ZooKeeperStateProvider.ROOT_NODE, "/nifi/team1/testing");
         defaultProperties.put(ZooKeeperStateProvider.ACCESS_CONTROL, ZooKeeperStateProvider.OPEN_TO_WORLD.getValue());
-        defaultProperties.put(ZooKeeperStateProvider.KEYSTORE_FILEPATH, CLIENT_KEYSTORE);
-        defaultProperties.put(ZooKeeperStateProvider.KEYSTORE_PASSWORD, TEST_PASSWORD);
-        defaultProperties.put(ZooKeeperStateProvider.KEYSTORE_TYPE, CLIENT_KEYSTORE_TYPE);
-        defaultProperties.put(ZooKeeperStateProvider.TRUSTSTORE_FILEPATH, CLIENT_TRUSTSTORE);
-        defaultProperties.put(ZooKeeperStateProvider.TRUSTSTORE_PASSWORD, TEST_PASSWORD);
-        defaultProperties.put(ZooKeeperStateProvider.TRUSTSTORE_TYPE, CLIENT_TRUSTSTORE_TYPE);
+
+//        defaultProperties.put(NiFiProperties.KEYSTORE_FILEPATH, CLIENT_KEYSTORE);
+//        defaultProperties.put(ZooKeeperStateProvider.KEYSTORE_PASSWORD, TEST_PASSWORD);
+//        defaultProperties.put(ZooKeeperStateProvider.KEYSTORE_TYPE, CLIENT_KEYSTORE_TYPE);
+//        defaultProperties.put(ZooKeeperStateProvider.TRUSTSTORE_FILEPATH, CLIENT_TRUSTSTORE);
+//        defaultProperties.put(ZooKeeperStateProvider.TRUSTSTORE_PASSWORD, TEST_PASSWORD);
+//        defaultProperties.put(ZooKeeperStateProvider.TRUSTSTORE_TYPE, CLIENT_TRUSTSTORE_TYPE);
     }
 
     @Before
     public void setup() throws Exception {
-        tempDir = Paths.get("target/TestSecureClientZooKeeperFactory");
+        tempDir = Paths.get("target/TestZooKeeperStateProvider");
         dataDir = tempDir.resolve("state");
         clientPort = InstanceSpec.getRandomPort();
 
@@ -93,10 +99,10 @@ public class ITZooKeeperStateProvider extends AbstractTestStateProvider {
                 dataDir,
                 tempDir,
                 clientPort,
-                SERVER_KEYSTORE,
-                TEST_PASSWORD,
-                SERVER_TRUSTSTORE,
-                TEST_PASSWORD
+                Paths.get(SERVER_KEYSTORE),
+                KEYSTORE_PASSWORD,
+                Paths.get(SERVER_TRUSTSTORE),
+                TRUSTSTORE_PASSWORD
         );
 
         zkServer = serverConnectionFactory.getZooKeeperServer();
@@ -128,6 +134,15 @@ public class ITZooKeeperStateProvider extends AbstractTestStateProvider {
                 for (final Map.Entry<PropertyDescriptor, PropertyValue> entry : getProperties().entrySet()) {
                     propValueMap.put(entry.getKey().getName(), entry.getValue().getValue());
                 }
+
+                propValueMap.put(NiFiProperties.ZOOKEEPER_CLIENT_SECURE, Boolean.TRUE.toString());
+                propValueMap.put(NiFiProperties.ZOOKEEPER_SECURITY_KEYSTORE, CLIENT_KEYSTORE);
+                propValueMap.put(NiFiProperties.ZOOKEEPER_SECURITY_KEYSTORE_PASSWD, KEYSTORE_PASSWORD);
+                propValueMap.put(NiFiProperties.ZOOKEEPER_SECURITY_KEYSTORE_TYPE, CLIENT_KEYSTORE_TYPE);
+                propValueMap.put(NiFiProperties.ZOOKEEPER_SECURITY_TRUSTSTORE, CLIENT_TRUSTSTORE);
+                propValueMap.put(NiFiProperties.ZOOKEEPER_SECURITY_TRUSTSTORE_PASSWD, TRUSTSTORE_PASSWORD);
+                propValueMap.put(NiFiProperties.ZOOKEEPER_SECURITY_TRUSTSTORE_TYPE, CLIENT_TRUSTSTORE_TYPE);
+
                 return propValueMap;
             }
 
@@ -189,11 +204,19 @@ public class ITZooKeeperStateProvider extends AbstractTestStateProvider {
                     tempDir
             );
 
-            files.forEach(p -> {
+            files.forEach(file -> {
                 try {
-                    if (p != null) Files.deleteIfExists(p);
-                } catch (final IOException ioe) {}
+                    if (file != null) Files.deleteIfExists(file);
+                } catch (final IOException ioe) {
+                    logger.error("Failed to delete: " + file.toString(), ioe);
+                }
             });
+        }
+
+        try {
+            FileUtils.deleteDirectory(new File(tempDir.toString()));
+        } catch (IOException e) {
+            logger.error("Failed to delete: " + tempDir.toString(), e);
         }
     }
 
