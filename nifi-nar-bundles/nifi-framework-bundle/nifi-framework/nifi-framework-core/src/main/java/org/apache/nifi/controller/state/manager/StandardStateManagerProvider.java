@@ -98,8 +98,6 @@ public class StandardStateManagerProvider implements StateManagerProvider {
         return provider;
     }
 
-
-
     public static synchronized void resetProvider() {
         provider = null;
     }
@@ -110,13 +108,11 @@ public class StandardStateManagerProvider implements StateManagerProvider {
         return createStateProvider(configFile, Scope.LOCAL, properties, variableRegistry, extensionManager, parameterLookup);
     }
 
-
     private static StateProvider createClusteredStateProvider(final NiFiProperties properties, final VariableRegistry variableRegistry, final ExtensionManager extensionManager,
                                                               final ParameterLookup parameterLookup) throws IOException, ConfigParseException {
         final File configFile = properties.getStateManagementConfigFile();
         return createStateProvider(configFile, Scope.CLUSTER, properties, variableRegistry, extensionManager, parameterLookup);
     }
-
 
     private static StateProvider createStateProvider(final File configFile, final Scope scope, final NiFiProperties properties, final VariableRegistry variableRegistry,
                                                      final ExtensionManager extensionManager, final ParameterLookup parameterLookup) throws ConfigParseException, IOException {
@@ -233,7 +229,7 @@ public class StandardStateManagerProvider implements StateManagerProvider {
         }
 
         // add TLS properties if the state provider is a TLS secured Zookeeper
-        if(properties.isZooKeeperSecure() && providerConfig.getClassName().equals(ZooKeeperStateProvider.class.getName())) {
+        if(properties.isZooKeeperClientSecure() && providerConfig.getClassName().equals(ZooKeeperStateProvider.class.getName())) {
             propertyMap.put(new PropertyDescriptor.Builder().name(NiFiProperties.ZOOKEEPER_CLIENT_SECURE).build(),
                     new StandardPropertyValue("true", null, parameterLookup, variableRegistry));
 

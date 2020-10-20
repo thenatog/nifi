@@ -294,7 +294,7 @@ public class NiFiPropertiesTest {
             put(NiFiProperties.ZOOKEEPER_SECURITY_TRUSTSTORE_TYPE, "JKS");
         }});
 
-        assertTrue(properties.isZooKeeperSecure());
+        assertTrue(properties.isZooKeeperClientSecure());
         assertTrue(properties.isZooKeeperTlsConfigurationPresent());
     }
 
@@ -308,7 +308,7 @@ public class NiFiPropertiesTest {
             put(NiFiProperties.ZOOKEEPER_SECURITY_TRUSTSTORE_TYPE, "JKS");
         }});
 
-        assertTrue(properties.isZooKeeperSecure());
+        assertTrue(properties.isZooKeeperClientSecure());
         assertFalse(properties.isZooKeeperTlsConfigurationPresent());
     }
 
@@ -324,7 +324,7 @@ public class NiFiPropertiesTest {
             put(NiFiProperties.ZOOKEEPER_SECURITY_TRUSTSTORE_TYPE, "JKS");
         }});
 
-        assertTrue(properties.isZooKeeperSecure());
+        assertTrue(properties.isZooKeeperClientSecure());
         assertTrue(properties.isZooKeeperTlsConfigurationPresent());
     }
 }

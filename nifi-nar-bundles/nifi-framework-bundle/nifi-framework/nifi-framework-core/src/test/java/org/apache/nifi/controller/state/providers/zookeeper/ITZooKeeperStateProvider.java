@@ -78,13 +78,6 @@ public class ITZooKeeperStateProvider extends AbstractTestStateProvider {
         defaultProperties.put(ZooKeeperStateProvider.SESSION_TIMEOUT, "15 secs");
         defaultProperties.put(ZooKeeperStateProvider.ROOT_NODE, "/nifi/team1/testing");
         defaultProperties.put(ZooKeeperStateProvider.ACCESS_CONTROL, ZooKeeperStateProvider.OPEN_TO_WORLD.getValue());
-
-//        defaultProperties.put(NiFiProperties.KEYSTORE_FILEPATH, CLIENT_KEYSTORE);
-//        defaultProperties.put(ZooKeeperStateProvider.KEYSTORE_PASSWORD, TEST_PASSWORD);
-//        defaultProperties.put(ZooKeeperStateProvider.KEYSTORE_TYPE, CLIENT_KEYSTORE_TYPE);
-//        defaultProperties.put(ZooKeeperStateProvider.TRUSTSTORE_FILEPATH, CLIENT_TRUSTSTORE);
-//        defaultProperties.put(ZooKeeperStateProvider.TRUSTSTORE_PASSWORD, TEST_PASSWORD);
-//        defaultProperties.put(ZooKeeperStateProvider.TRUSTSTORE_TYPE, CLIENT_TRUSTSTORE_TYPE);
     }
 
     @Before
@@ -175,15 +168,11 @@ public class ITZooKeeperStateProvider extends AbstractTestStateProvider {
 
     @After
     public void clear() throws IOException {
-
-
-
         try {
             if (provider != null) {
                 provider.onComponentRemoved(componentId);
                 provider.disable();
                 provider.shutdown();
-                clearDirectories();
             }
         } finally {
             if (zkServer != null) {
@@ -194,25 +183,6 @@ public class ITZooKeeperStateProvider extends AbstractTestStateProvider {
     }
 
     private static void clearDirectories() {
-        if (tempDir != null) {
-            final List<Path> files = Arrays.asList(
-                    dataDir.resolve("version-2/snapshot.0"),
-                    dataDir.resolve("version-2/log.1"),
-                    dataDir.resolve("version-2"),
-                    dataDir.resolve("myid"),
-                    dataDir,
-                    tempDir
-            );
-
-            files.forEach(file -> {
-                try {
-                    if (file != null) Files.deleteIfExists(file);
-                } catch (final IOException ioe) {
-                    logger.error("Failed to delete: " + file.toString(), ioe);
-                }
-            });
-        }
-
         try {
             FileUtils.deleteDirectory(new File(tempDir.toString()));
         } catch (IOException e) {

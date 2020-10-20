@@ -68,9 +68,7 @@ import java.util.concurrent.TimeUnit;
  * consistency across configuration interactions.
  */
 public class ZooKeeperStateProvider extends AbstractStateProvider {
-
     private static final Logger logger = LoggerFactory.getLogger(ZooKeeperStateProvider.class);
-
     private static final int ONE_MB = 1024 * 1024;
 
     static final AllowableValue OPEN_TO_WORLD = new AllowableValue("Open", "Open", "ZNodes will be open to any ZooKeeper client.");
@@ -132,7 +130,6 @@ public class ZooKeeperStateProvider extends AbstractStateProvider {
 
     public ZooKeeperStateProvider() {
     }
-
 
     @Override
     public List<PropertyDescriptor> getSupportedPropertyDescriptors() {
