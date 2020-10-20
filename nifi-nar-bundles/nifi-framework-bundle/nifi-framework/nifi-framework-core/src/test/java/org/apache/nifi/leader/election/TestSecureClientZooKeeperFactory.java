@@ -210,7 +210,7 @@ public class TestSecureClientZooKeeperFactory {
 
         final Properties properties = new Properties();
         properties.setProperty(NiFiProperties.ZOOKEEPER_CONNECT_STRING, String.format("localhost:%d", clientPort));
-        properties.setProperty(NiFiProperties.ZOOKEEPER_CLIENT_SECURE, "true");
+        properties.setProperty(NiFiProperties.ZOOKEEPER_CLIENT_SECURE, Boolean.TRUE.toString());
         properties.setProperty(NiFiProperties.ZOOKEEPER_SECURITY_KEYSTORE, keyStore.toString());
         properties.setProperty(NiFiProperties.ZOOKEEPER_SECURITY_KEYSTORE_TYPE, keyStoreType);
         properties.setProperty(NiFiProperties.ZOOKEEPER_SECURITY_KEYSTORE_PASSWD, keyStorePassword);

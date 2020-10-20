@@ -191,22 +191,14 @@ public class ZooKeeperStateProvider extends AbstractStateProvider {
             if(zooKeeperClientConfig != null && zooKeeperClientConfig.isClientSecure()) {
                 SecureClientZooKeeperFactory factory = new SecureClientZooKeeperFactory(zooKeeperClientConfig);
                 try {
-                    zooKeeper = factory.newZooKeeper(connectionString, timeoutMillis, new Watcher() {
-                        @Override
-                        public void process(WatchedEvent event) {
-                        }
-                    }, true);
+                    zooKeeper = factory.newZooKeeper(connectionString, timeoutMillis, null, true);
                     logger.info("Secure Zookeeper client initialized successfully.");
                 } catch (Exception e) {
                     logger.error("Secure Zookeeper configuration failed!", e);
                     invalidateClient();
                 }
             } else {
-                zooKeeper = new ZooKeeper(connectionString, timeoutMillis, new Watcher() {
-                    @Override
-                    public void process(WatchedEvent event) {
-                    }
-                });
+                zooKeeper = new ZooKeeper(connectionString, timeoutMillis, null);
             }
 
             if (auth != null) {

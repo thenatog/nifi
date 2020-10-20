@@ -84,7 +84,7 @@ public class ZooKeeperClientConfigTest {
     public void testValidClientSecureTrue() {
         final Properties properties = new Properties();
         properties.setProperty(NiFiProperties.ZOOKEEPER_CONNECT_STRING, "local:1234");
-        properties.setProperty(NiFiProperties.ZOOKEEPER_CLIENT_SECURE, "true");
+        properties.setProperty(NiFiProperties.ZOOKEEPER_CLIENT_SECURE, Boolean.TRUE.toString());
 
         final ZooKeeperClientConfig zkClientConfig = ZooKeeperClientConfig.createConfig(new StandardNiFiProperties(properties));
         assertTrue(zkClientConfig.isClientSecure());
@@ -95,7 +95,7 @@ public class ZooKeeperClientConfigTest {
     public void testValidClientSecureFalse() {
         final Properties properties = new Properties();
         properties.setProperty(NiFiProperties.ZOOKEEPER_CONNECT_STRING, "local:1234");
-        properties.setProperty(NiFiProperties.ZOOKEEPER_CLIENT_SECURE, "false");
+        properties.setProperty(NiFiProperties.ZOOKEEPER_CLIENT_SECURE, Boolean.FALSE.toString());
 
         final ZooKeeperClientConfig zkClientConfig = ZooKeeperClientConfig.createConfig(new StandardNiFiProperties(properties));
         assertFalse(zkClientConfig.isClientSecure());
@@ -128,7 +128,7 @@ public class ZooKeeperClientConfigTest {
     public void testValidClientSecureUpperCase() {
         final Properties properties = new Properties();
         properties.setProperty(NiFiProperties.ZOOKEEPER_CONNECT_STRING, "local:1234");
-        properties.setProperty(NiFiProperties.ZOOKEEPER_CLIENT_SECURE, "TRUE");
+        properties.setProperty(NiFiProperties.ZOOKEEPER_CLIENT_SECURE, Boolean.TRUE.toString());
         ZooKeeperClientConfig.createConfig(new StandardNiFiProperties(properties));
 
         final ZooKeeperClientConfig zkClientConfig = ZooKeeperClientConfig.createConfig(new StandardNiFiProperties(properties));

@@ -254,7 +254,6 @@ public class ITZooKeeperStateProvider extends AbstractTestStateProvider {
                 // does not succeeed within 30 seconds.
                 Thread.sleep(1000L);
             } catch (final Exception e) {
-                e.printStackTrace();
                 logger.error("Something went wrong attempting to set the state in testStateTooLargeExceptionThrownOnSetState()");
                 Assert.fail("Expected StateTooLargeException but " + e.getClass() + " was thrown", e);
             }

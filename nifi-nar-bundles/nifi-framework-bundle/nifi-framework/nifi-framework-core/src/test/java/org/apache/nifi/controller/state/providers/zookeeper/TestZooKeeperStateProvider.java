@@ -160,7 +160,6 @@ public class TestZooKeeperStateProvider extends AbstractTestStateProvider {
                 // does not succeeed within 30 seconds.
                 Thread.sleep(1000L);
             } catch (final Exception e) {
-                e.printStackTrace();
                 Assert.fail("Expected StateTooLargeException but " + e.getClass() + " was thrown", e);
             }
         }
@@ -203,7 +202,6 @@ public class TestZooKeeperStateProvider extends AbstractTestStateProvider {
         } catch (final StateTooLargeException stle) {
             // expected behavior.
         } catch (final Exception e) {
-            e.printStackTrace();
             Assert.fail("Expected StateTooLargeException", e);
         }
 
