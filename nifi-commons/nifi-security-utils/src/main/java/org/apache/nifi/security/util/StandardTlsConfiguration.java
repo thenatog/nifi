@@ -224,7 +224,7 @@ public class StandardTlsConfiguration implements TlsConfiguration {
                 keystoreType, truststorePath, truststorePassword,
                 truststoreType, protocol);
         if (logger.isDebugEnabled()) {
-            logger.debug("Instantiating TlsConfiguration from NiFi properties: {}, {}, {}, {}, {}, {}, {}, {}",
+            logger.debug("Instantiating ZooKeeper TlsConfiguration from NiFi properties: {}, {}, {}, {}, {}, {}, {}, {}",
                     keystorePath, tlsConfiguration.getKeystorePasswordForLogging(), tlsConfiguration.getKeyPasswordForLogging(), keystoreType,
                     truststorePath, tlsConfiguration.getTruststorePasswordForLogging(), truststoreType, protocol);
         }
