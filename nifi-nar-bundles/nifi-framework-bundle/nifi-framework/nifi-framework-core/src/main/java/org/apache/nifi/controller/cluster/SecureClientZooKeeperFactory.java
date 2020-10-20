@@ -27,8 +27,7 @@ import org.apache.zookeeper.common.X509Util;
 
 public class SecureClientZooKeeperFactory implements ZookeeperFactory {
 
-    private static final String NETTY_CLIENT_CNXN_SOCKET =
-        "org.apache.zookeeper.ClientCnxnSocketNetty";
+    public static final String NETTY_CLIENT_CNXN_SOCKET = org.apache.zookeeper.ClientCnxnSocketNetty.class.getName();
 
     private ZKClientConfig zkSecureClientConfig;
 
