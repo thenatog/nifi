@@ -34,6 +34,8 @@ import static org.mockito.Mockito.when;
 public class NiFiAnonymousAuthenticationProviderTest {
 
     private static final Logger logger = LoggerFactory.getLogger(NiFiAnonymousAuthenticationProviderTest.class);
+    private static final boolean IS_NOT_STATIC_RESOURCE = false;
+    private static final boolean IS_STATIC_RESOURCE = false;
 
     @Test
     public void testAnonymousDisabledNotSecure() throws Exception {
@@ -42,7 +44,7 @@ public class NiFiAnonymousAuthenticationProviderTest {
 
         final NiFiAnonymousAuthenticationProvider anonymousAuthenticationProvider = new NiFiAnonymousAuthenticationProvider(nifiProperties, mock(Authorizer.class));
 
-        final NiFiAnonymousAuthenticationRequestToken authenticationRequest = new NiFiAnonymousAuthenticationRequestToken(false, StringUtils.EMPTY);
+        final NiFiAnonymousAuthenticationRequestToken authenticationRequest = new NiFiAnonymousAuthenticationRequestToken(false, StringUtils.EMPTY, IS_NOT_STATIC_RESOURCE);
 
         final NiFiAuthenticationToken authentication = (NiFiAuthenticationToken) anonymousAuthenticationProvider.authenticate(authenticationRequest);
         final NiFiUserDetails userDetails = (NiFiUserDetails) authentication.getDetails();
@@ -56,7 +58,7 @@ public class NiFiAnonymousAuthenticationProviderTest {
 
         final NiFiAnonymousAuthenticationProvider anonymousAuthenticationProvider = new NiFiAnonymousAuthenticationProvider(nifiProperties, mock(Authorizer.class));
 
-        final NiFiAnonymousAuthenticationRequestToken authenticationRequest = new NiFiAnonymousAuthenticationRequestToken(false, StringUtils.EMPTY);
+        final NiFiAnonymousAuthenticationRequestToken authenticationRequest = new NiFiAnonymousAuthenticationRequestToken(false, StringUtils.EMPTY, IS_NOT_STATIC_RESOURCE);
 
         final NiFiAuthenticationToken authentication = (NiFiAuthenticationToken) anonymousAuthenticationProvider.authenticate(authenticationRequest);
         final NiFiUserDetails userDetails = (NiFiUserDetails) authentication.getDetails();
@@ -70,7 +72,7 @@ public class NiFiAnonymousAuthenticationProviderTest {
 
         final NiFiAnonymousAuthenticationProvider anonymousAuthenticationProvider = new NiFiAnonymousAuthenticationProvider(nifiProperties, mock(Authorizer.class));
 
-        final NiFiAnonymousAuthenticationRequestToken authenticationRequest = new NiFiAnonymousAuthenticationRequestToken(true, StringUtils.EMPTY);
+        final NiFiAnonymousAuthenticationRequestToken authenticationRequest = new NiFiAnonymousAuthenticationRequestToken(true, StringUtils.EMPTY, IS_NOT_STATIC_RESOURCE);
 
         anonymousAuthenticationProvider.authenticate(authenticationRequest);
     }
@@ -82,7 +84,49 @@ public class NiFiAnonymousAuthenticationProviderTest {
 
         final NiFiAnonymousAuthenticationProvider anonymousAuthenticationProvider = new NiFiAnonymousAuthenticationProvider(nifiProperties, mock(Authorizer.class));
 
-        final NiFiAnonymousAuthenticationRequestToken authenticationRequest = new NiFiAnonymousAuthenticationRequestToken(true, StringUtils.EMPTY);
+        final NiFiAnonymousAuthenticationRequestToken authenticationRequest = new NiFiAnonymousAuthenticationRequestToken(true, StringUtils.EMPTY, IS_NOT_STATIC_RESOURCE);
+
+        final NiFiAuthenticationToken authentication = (NiFiAuthenticationToken) anonymousAuthenticationProvider.authenticate(authenticationRequest);
+        final NiFiUserDetails userDetails = (NiFiUserDetails) authentication.getDetails();
+        assertTrue(userDetails.getNiFiUser().isAnonymous());
+    }
+
+    @Test
+    public void testAnonymousDisabledNotSecureIsStaticResource() throws Exception {
+        final NiFiProperties nifiProperties = Mockito.mock(NiFiProperties.class);
+        when(nifiProperties.isAnonymousAuthenticationAllowed()).thenReturn(false);
+
+        final NiFiAnonymousAuthenticationProvider anonymousAuthenticationProvider = new NiFiAnonymousAuthenticationProvider(nifiProperties, mock(Authorizer.class));
+
+        final NiFiAnonymousAuthenticationRequestToken authenticationRequest = new NiFiAnonymousAuthenticationRequestToken(false, StringUtils.EMPTY, true);
+
+        final NiFiAuthenticationToken authentication = (NiFiAuthenticationToken) anonymousAuthenticationProvider.authenticate(authenticationRequest);
+        final NiFiUserDetails userDetails = (NiFiUserDetails) authentication.getDetails();
+        assertTrue(userDetails.getNiFiUser().isAnonymous());
+    }
+
+    @Test
+    public void testAnonymousDisabledSecureIsStaticResource() throws Exception {
+        final NiFiProperties nifiProperties = Mockito.mock(NiFiProperties.class);
+        when(nifiProperties.isAnonymousAuthenticationAllowed()).thenReturn(false);
+
+        final NiFiAnonymousAuthenticationProvider anonymousAuthenticationProvider = new NiFiAnonymousAuthenticationProvider(nifiProperties, mock(Authorizer.class));
+
+        final NiFiAnonymousAuthenticationRequestToken authenticationRequest = new NiFiAnonymousAuthenticationRequestToken(true, StringUtils.EMPTY, true);
+
+        final NiFiAuthenticationToken authentication = (NiFiAuthenticationToken) anonymousAuthenticationProvider.authenticate(authenticationRequest);
+        final NiFiUserDetails userDetails = (NiFiUserDetails) authentication.getDetails();
+        assertTrue(userDetails.getNiFiUser().isAnonymous());
+    }
+
+    @Test
+    public void testAnonymousEnabledSecureIsStaticResource() throws Exception {
+        final NiFiProperties nifiProperties = Mockito.mock(NiFiProperties.class);
+        when(nifiProperties.isAnonymousAuthenticationAllowed()).thenReturn(true);
+
+        final NiFiAnonymousAuthenticationProvider anonymousAuthenticationProvider = new NiFiAnonymousAuthenticationProvider(nifiProperties, mock(Authorizer.class));
+
+        final NiFiAnonymousAuthenticationRequestToken authenticationRequest = new NiFiAnonymousAuthenticationRequestToken(true, StringUtils.EMPTY, true);
 
         final NiFiAuthenticationToken authentication = (NiFiAuthenticationToken) anonymousAuthenticationProvider.authenticate(authenticationRequest);
         final NiFiUserDetails userDetails = (NiFiUserDetails) authentication.getDetails();
