@@ -49,7 +49,9 @@ public class NiFiAnonymousAuthenticationRequestToken extends NiFiAuthenticationR
         return secureRequest;
     }
 
-    public boolean isRequestingStaticResource() { return isRequestingStaticResource; }
+    public boolean isRequestingStaticResource() {
+        return isRequestingStaticResource;
+    }
 
     @Override
     public Object getPrincipal() {
