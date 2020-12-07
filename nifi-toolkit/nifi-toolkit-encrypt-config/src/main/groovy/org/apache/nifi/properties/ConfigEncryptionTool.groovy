@@ -378,9 +378,9 @@ class ConfigEncryptionTool {
                 newFlowAlgorithm = commandLine.getOptionValue(NEW_FLOW_ALGORITHM_ARG)
                 newFlowProvider = commandLine.getOptionValue(NEW_FLOW_PROVIDER_ARG)
 
-                if (flowXmlPath.matches(outputFlowXmlPath)) {
+                if (flowXmlPath == outputFlowXmlPath) {
                     // TODO: Add confirmation pause and provide -y flag to offer no-interaction mode?
-                    logger.debug("The source flow.xml.gz and destination flow.xml.gz are identical [${flowXmlPath}] so the original will be overwritten")
+                    logger.warn("The source flow.xml.gz and destination flow.xml.gz are identical [${outputFlowXmlPath}] so the original will be overwritten")
                 }
 
                 if (!commandLine.hasOption(NIFI_PROPERTIES_ARG)) {
@@ -466,12 +466,6 @@ class ConfigEncryptionTool {
             printUsageAndThrow("Error parsing command line. (" + e.getMessage() + ")", ExitCode.ERROR_PARSING_COMMAND_LINE)
         }
         return commandLine
-    }
-
-
-    private Path getTemporaryFlowXmlFile(String originalOutputFlowXmlPath) {
-        String migratedFileName = "migrated-".concat(Paths.get(originalOutputFlowXmlPath).getFileName().toString())
-        Paths.get(originalOutputFlowXmlPath).resolveSibling(migratedFileName)
     }
 
     /**
@@ -861,6 +855,12 @@ class ConfigEncryptionTool {
             migratedFlowXml = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFlowXmlPath)));
         }
         migratedFlowXml
+    }
+
+    // Create a temporary output file we can write the stream to
+    private Path getTemporaryFlowXmlFile(String originalOutputFlowXmlPath) {
+        String migratedFileName = "migrated-".concat(Paths.get(originalOutputFlowXmlPath).getFileName().toString())
+        Paths.get(originalOutputFlowXmlPath).resolveSibling(migratedFileName)
     }
 
     /**
@@ -1634,6 +1634,7 @@ class ConfigEncryptionTool {
         String newProvider = newFlowProvider ?: existingProvider
 
         try {
+            logger.info("Migrating flow.xml file at ${flowXmlPath}. This could take a while if the flow XML is very large.")
             migrateFlowXmlContent(flowXmlInputStream, existingFlowPassword, newFlowPassword, existingAlgorithm, existingProvider, newAlgorithm, newProvider)
         } catch (Exception e) {
             logger.error("Encountered an error: ${e.getLocalizedMessage()}")
