@@ -239,11 +239,11 @@ public class ZooKeeperStateServer extends ZooKeeperServerMain {
     /**
      * Reconcile properties between the nifi.properties and zookeeper.properties (zoo.cfg) files. Most of the ZooKeeper server properties are derived from
      * the zookeeper.properties file, while the TLS key/truststore properties are taken from nifi.properties.
-     * @param niFiProperties
-     * @param zkProperties
+     * @param niFiProperties NiFiProperties file containing ZooKeeper client and TLS configuration
+     * @param zkProperties The zookeeper.properties file containing Zookeeper server configuration
      * @return A reconciled QuorumPeerConfig which will include TLS properties set if they are available.
-     * @throws IOException
-     * @throws ConfigException
+     * @throws IOException If configuration files fail to parse.
+     * @throws ConfigException If secure configuration is not as expected. Check administration documentation.
      */
     private static QuorumPeerConfig reconcileProperties(NiFiProperties niFiProperties, Properties zkProperties) throws IOException, ConfigException {
         QuorumPeerConfig peerConfig = new QuorumPeerConfig();
@@ -252,7 +252,9 @@ public class ZooKeeperStateServer extends ZooKeeperServerMain {
         // If secureClientPortAddress is set but no TLS config is set, fail to start.
         final boolean isTLSConfigPresent = niFiProperties.isTlsConfigurationPresent() || niFiProperties.isZooKeeperTlsConfigurationPresent();
         if (peerConfig.getSecureClientPortAddress() != null && !isTLSConfigPresent) {
-            throw new ConfigException(String.format("Property secureClientPort was set in %s but there was no TLS config present in nifi.properties", niFiProperties.getProperty(NiFiProperties.STATE_MANAGEMENT_ZOOKEEPER_PROPERTIES)));
+            throw new ConfigException(
+                    String.format("Property secureClientPort was set in %s but there was no TLS config present in nifi.properties",
+                    niFiProperties.getProperty(NiFiProperties.STATE_MANAGEMENT_ZOOKEEPER_PROPERTIES)));
         }
 
         // If this is an insecure NiFi no changes are needed:
