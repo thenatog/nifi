@@ -52,12 +52,15 @@ import static org.junit.Assert.assertNotNull;
 public class ITZooKeeperStateServerTLS {
     private static final String KEY_STORE = getPath("keystore.jks");
     private static final String TRUST_STORE = getPath("truststore.jks");
-    private static final String STORE_TYPE = getPath("JKS");
+    private static final String STORE_TYPE = "JKS";
     private static final String INSECURE_ZOOKEEPER_PROPS = getPath("insecure.zookeeper.properties");
     private static final String PARTIAL_ZOOKEEPER_PROPS = getPath("partial.zookeeper.properties");
     private static final String COMPLETE_ZOOKEEPER_PROPS = getPath("complete.zookeeper.properties");
     private static final String SECURE_ZOOKEEPER_PROPS = getPath("secure.zookeeper.properties");
     private static final String ZOOKEEPER_PROPERTIES_FILE_KEY = "nifi.state.management.embedded.zookeeper.properties";
+    private static final String ZOOKEEPER_CNXN_FACTORY = "org.apache.zookeeper.server.NettyServerCnxnFactory";
+    private static final String CONNECT_STRING = "localhost:2281";
+    private static final String QUORUM_CONNECT_STRING = "node0.apache.org:2281,node1.apache.org:2281";
 
     private static final Map<String, String> INSECURE_NIFI_PROPS = new HashMap<String, String>() {{
         put(ZOOKEEPER_PROPERTIES_FILE_KEY, INSECURE_ZOOKEEPER_PROPS);
@@ -107,7 +110,6 @@ public class ITZooKeeperStateServerTLS {
         assertNotNull(insecureZooKeeperProps);
     }
 
-
     @After
     public void clearConnectionProperties() {
         Collections.unmodifiableSet(System.getProperties().stringPropertyNames()).stream()
@@ -115,7 +117,6 @@ public class ITZooKeeperStateServerTLS {
                 .forEach(System::clearProperty);
 
     }
-
 
     // This test shows that a ZooKeeperStateServer cannot be created from empty NiFi properties.
     @Test
@@ -126,7 +127,6 @@ public class ITZooKeeperStateServerTLS {
         Assert.assertNull(ZooKeeperStateServer.create(emptyProps));
     }
 
-
     // This test shows that a ZooKeeperStateServer can be created from insecure NiFi properties.
     @Test
     public void testCreateFromValidInsecureNiFiProperties() throws IOException, QuorumPeerConfig.ConfigException {
@@ -136,7 +136,6 @@ public class ITZooKeeperStateServerTLS {
         assertNotNull(server);
         assertNotNull(server.getQuorumPeerConfig().getClientPortAddress());
     }
-
 
     // This test shows that a ZK TLS config with some but not all values throws an exception:
     @Test
@@ -150,18 +149,16 @@ public class ITZooKeeperStateServerTLS {
                 ZooKeeperStateServer.create(partialProps));
     }
 
-
     // This test shows that a ZK TLS config with all values set is valid and a server can be created using it:
     @Test
     public void testCreateFromCompleteZooKeeperTlsProperties() throws IOException, QuorumPeerConfig.ConfigException {
         final NiFiProperties completeProps = NiFiProperties.createBasicNiFiProperties(null, new HashMap<String, String>() {{
             putAll(SECURE_NIFI_PROPS);
-            put(ZOOKEEPER_PROPERTIES_FILE_KEY, COMPLETE_ZOOKEEPER_PROPS);
+            put(ZOOKEEPER_PROPERTIES_FILE_KEY, SECURE_ZOOKEEPER_PROPS);
         }});
 
         assertNotNull(ZooKeeperStateServer.create(completeProps));
     }
-
 
     // This test shows that the client can specify a secure port and that port is used:
     @Test
@@ -178,7 +175,6 @@ public class ITZooKeeperStateServerTLS {
         assertEquals(secureZooKeeperProps.getProperty("secureClientPort"), String.valueOf(config.getSecureClientPortAddress().getPort()));
     }
 
-
     // This shows that a secure NiFi with an insecure ZooKeeper will not have an insecure client address or port:
     @Test
     public void testCreateRemovesInsecureClientPort() {
@@ -187,25 +183,11 @@ public class ITZooKeeperStateServerTLS {
         Assert.assertNull(quorumPeerConfig.getClientPortAddress());
     }
 
-
-    // This test to shows that an available port is selected when none is specified:
-    @Test
-    public void testCreateWithUnspecifiedSecureClientPort() {
-        final int port = quorumPeerConfig.getSecureClientPortAddress().getPort();
-
-        Assert.assertNotEquals(0, port);
-        Assert.assertNotEquals(1181, port);
-        Assert.assertNotEquals(2181, port);
-        Assert.assertNotEquals(2182, port);
-        Assert.assertTrue(port > ZooKeeperStateServer.MIN_AVAILABLE_PORT);
-    }
-
     // This test shows that a connection class is set when none is specified (QuorumPeerConfig::parseProperties sets the System property):
     @Test
     public void testCreateWithUnspecifiedConnectionClass() {
         assertEquals(ZooKeeperStateServer.SERVER_CNXN_FACTORY, System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY));
     }
-
 
     // This test shows that a specified connection class is honored (QuorumPeerConfig::parseProperties sets the System property):
     @Test
@@ -216,71 +198,8 @@ public class ITZooKeeperStateServerTLS {
         }});
 
         assertNotNull(ZooKeeperStateServer.create(secureProps));
-        assertEquals(secureZooKeeperProps.getProperty("serverCnxnFactory"), System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY));
+        assertEquals(ZOOKEEPER_CNXN_FACTORY, System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY));
     }
-
-
-    // This test shows that NiFi TLS properties are propagated System properties for ZooKeeper:
-    @Test
-    public void testCreateFromPropagatedNiFiProperties() {
-        ZooKeeperStateServer.ZOOKEEPER_TO_NIFI_PROPERTIES.keySet().forEach((key) ->
-                assertEquals(niFiProps.getProperty(ZooKeeperStateServer.ZOOKEEPER_TO_NIFI_PROPERTIES.get(key)), System.getProperty("zookeeper." + key)));
-    }
-
-
-    // This test shows that the NiFi ZK client connection string is used when no ZK secure port is specified
-    @Test
-    public void testCreateWithSpecifiedClientConnectionString() throws IOException, QuorumPeerConfig.ConfigException {
-        final int securePort = 1234;
-        final String connect = "localhost:" + securePort;
-        final NiFiProperties validZkClientProps = NiFiProperties.createBasicNiFiProperties(null, new HashMap<String, String>() {{
-            putAll(SECURE_NIFI_PROPS);
-            put(NiFiProperties.ZOOKEEPER_CONNECT_STRING, connect);
-        }});
-
-
-        final ZooKeeperStateServer server = ZooKeeperStateServer.create(validZkClientProps);
-        assertNotNull(server);
-        final QuorumPeerConfig config = server.getQuorumPeerConfig();
-        assertEquals(securePort, config.getSecureClientPortAddress().getPort());
-
-        final String invalidZkClientProps = " \t";
-        final NiFiProperties badProps = NiFiProperties.createBasicNiFiProperties(null, new HashMap<String, String>() {{
-            putAll(SECURE_NIFI_PROPS);
-            put(NiFiProperties.ZOOKEEPER_CONNECT_STRING, invalidZkClientProps);
-        }});
-        Assert.assertThrows(QuorumPeerConfig.ConfigException.class, () ->
-                ZooKeeperStateServer.create(badProps));
-    }
-
-
-    // This test shows that the NiFi ZK client connection string is referenced and verified when a ZK secure port is specified (for only one host).
-    @Test
-    public void testCreateWithSpecifiedSecurePortAndClientConnectionString() throws IOException, QuorumPeerConfig.ConfigException {
-        final int actualPort = Integer.parseInt(secureZooKeeperProps.getProperty("secureClientPort", "0"));
-        final String connect = "localhost:" + actualPort;
-        final NiFiProperties validZkClientProps = NiFiProperties.createBasicNiFiProperties(null, new HashMap<String, String>() {{
-            putAll(SECURE_NIFI_PROPS);
-            put(ZOOKEEPER_PROPERTIES_FILE_KEY, SECURE_ZOOKEEPER_PROPS);
-            put(NiFiProperties.ZOOKEEPER_CONNECT_STRING, connect);
-        }});
-
-        final ZooKeeperStateServer server = ZooKeeperStateServer.create(validZkClientProps);
-        assertNotNull(server);
-        final int serverPort = server.getQuorumPeerConfig().getSecureClientPortAddress().getPort();
-        assertEquals(actualPort, serverPort);
-
-        final String invalidZkClientProps = " \t";
-        final NiFiProperties badProps = NiFiProperties.createBasicNiFiProperties(null, new HashMap<String, String>() {{
-            putAll(SECURE_NIFI_PROPS);
-            put(ZOOKEEPER_PROPERTIES_FILE_KEY, SECURE_ZOOKEEPER_PROPS);
-            put(NiFiProperties.ZOOKEEPER_CONNECT_STRING, invalidZkClientProps);
-        }});
-        Assert.assertThrows(QuorumPeerConfig.ConfigException.class, () ->
-                ZooKeeperStateServer.create(badProps));
-    }
-
-    // ZooKeeper client and quorum TLS enabled by hand in zookeeper.properties
 
     private CloseableHttpClient httpclient;
 
@@ -312,13 +231,13 @@ public class ITZooKeeperStateServerTLS {
 
     // Connect to a secure ZooKeeperStateServer
     @Test
-    public void testSecureClientConnection() throws Exception {
+    public void testSecureClientQuorumConnectString() throws Exception {
         final int actualPort = Integer.parseInt(secureZooKeeperProps.getProperty("secureClientPort", "0"));
         final String connect = "localhost:" + actualPort;
         final NiFiProperties validZkClientProps = NiFiProperties.createBasicNiFiProperties(null, new HashMap<String, String>() {{
             putAll(SECURE_NIFI_PROPS);
             put(ZOOKEEPER_PROPERTIES_FILE_KEY, SECURE_ZOOKEEPER_PROPS);
-            put(NiFiProperties.ZOOKEEPER_CONNECT_STRING, connect);
+            put(NiFiProperties.ZOOKEEPER_CONNECT_STRING, QUORUM_CONNECT_STRING);
         }});
 
         server = ZooKeeperStateServer.create(validZkClientProps);
@@ -416,6 +335,33 @@ public class ITZooKeeperStateServerTLS {
         final String createResult = client.create().forPath(testPath, new byte[0]);
     }
 
+    // Connect to a secure ZooKeeperStateServer
+    @Test
+    public void testSecureClientConnection() throws Exception {
+        final int actualPort = Integer.parseInt(secureZooKeeperProps.getProperty("secureClientPort", "0"));
+        final String connect = "localhost:" + actualPort;
+        final NiFiProperties validZkClientProps = NiFiProperties.createBasicNiFiProperties(null, new HashMap<String, String>() {{
+            putAll(SECURE_NIFI_PROPS);
+            put(ZOOKEEPER_PROPERTIES_FILE_KEY, SECURE_ZOOKEEPER_PROPS);
+            put(NiFiProperties.ZOOKEEPER_CONNECT_STRING, connect);
+        }});
+
+        server = ZooKeeperStateServer.create(validZkClientProps);
+        assertNotNull(server);
+        final int serverPort = server.getQuorumPeerConfig().getSecureClientPortAddress().getPort();
+        assertEquals(actualPort, serverPort);
+        server.start();
+
+        // Set up a ZK client
+        CuratorFramework client = getSecureZooKeeperClient(serverPort);
+        client.start();
+        final String testPath = "/test";
+        final String createResult = client.create().forPath(testPath, new byte[0]);
+        final Stat checkExistsResult = client.checkExists().forPath(testPath);
+        assertEquals(createResult, testPath);
+        assertNotNull(checkExistsResult);
+    }
+
     private static String getPath(String path) {
         return new File("src/test/resources/TestZooKeeperStateServerConfigurations/" + path).getAbsolutePath();
     }
@@ -461,7 +407,6 @@ public class ITZooKeeperStateServerTLS {
                 .connectionTimeoutMs(zkClientConfig.getConnectionTimeoutMillis())
                 .retryPolicy(new RetryOneTime(200))
                 .defaultData(new byte[0])
-                // TODO: Nathan this needs to be either a SecureClientZooKeeperFactory or a DefaultZookeeperFactory
                 .zookeeperFactory(factory);
 
         return clientBuilder.build();
