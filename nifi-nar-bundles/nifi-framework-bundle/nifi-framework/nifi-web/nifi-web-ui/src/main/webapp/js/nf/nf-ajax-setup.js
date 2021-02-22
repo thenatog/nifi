@@ -44,7 +44,7 @@
                 // get the token to include in all requests
                 var token = nfStorage.getItem('jwt');
                 if (token !== null) {
-                    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    // TODO Nathan: xhr.setRequestHeader('Authorization', 'Bearer ' + token);
                 } else {
                     // if the current user was logged in with a token and the token just expired, cancel the request
                     if (hadToken === true) {

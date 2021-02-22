@@ -105,6 +105,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -1164,8 +1165,11 @@ public class AccessResource extends ApplicationResource {
 
             // if there is not certificate, consider a token
             if (certificates == null) {
-                // look for an authorization token
+                // look for an authorization token in header or cookie
+                // TODO Nathan: shouldn't this value have already been extracted by filters?
+                NiFiUserUtils.getNiFiUserIdentity();
                 final String authorization = httpServletRequest.getHeader(JwtAuthenticationFilter.AUTHORIZATION);
+
 
                 // if there is no authorization header, we don't know the user
                 if (authorization == null) {
@@ -1459,7 +1463,98 @@ public class AccessResource extends ApplicationResource {
 
         // build the response
         final URI uri = URI.create(generateResourceUri("access", "token"));
+
         return generateCreatedResponse(uri, token).build();
+    }
+
+    /**
+     * Creates a token for accessing the REST API via username/password stored as a cookie in the browser.
+     *
+     * @param httpServletRequest the servlet request
+     * @param username           the username
+     * @param password           the password
+     * @return A JWT (string) in a cookie
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_PLAIN)
+    @Path("/token-cookie")
+    @ApiOperation(
+            value = "Creates a token for accessing the REST API via username/password",
+            notes = "The token returned is formatted as a JSON Web Token (JWT). The token is base64 encoded and comprised of three parts. The header, " +
+                    "the body, and the signature. The expiration of the token is a contained within the body. The token can be used in the Authorization header " +
+                    "in the format 'Authorization: Bearer <token>'. It is stored in the browser as a cookie.",
+            response = String.class
+    )
+    @ApiResponses(
+            value = {
+                    @ApiResponse(code = 400, message = "NiFi was unable to complete the request because it was invalid. The request should not be retried without modification."),
+                    @ApiResponse(code = 403, message = "Client is not authorized to make this request."),
+                    @ApiResponse(code = 409, message = "Unable to create access token because NiFi is not in the appropriate state. (i.e. may not be configured to support username/password login."),
+                    @ApiResponse(code = 500, message = "Unable to create access token because an unexpected error occurred.")
+            }
+    )
+    public Response createAccessTokenCookie(
+            @Context HttpServletRequest httpServletRequest,
+            @FormParam("username") String username,
+            @FormParam("password") String password) {
+
+        // only support access tokens when communicating over HTTPS
+        if (!httpServletRequest.isSecure()) {
+            throw new AuthenticationNotSupportedException("Access tokens are only issued over HTTPS.");
+        }
+
+        // if not configuration for login, don't consider credentials
+        if (loginIdentityProvider == null) {
+            throw new IllegalStateException("Username/Password login not supported by this NiFi.");
+        }
+
+        final LoginAuthenticationToken loginAuthenticationToken;
+
+        // ensure we have login credentials
+        if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
+            throw new IllegalArgumentException("The username and password must be specified.");
+        }
+
+        try {
+            // attempt to authenticate
+            final AuthenticationResponse authenticationResponse = loginIdentityProvider.authenticate(new LoginCredentials(username, password));
+            final String rawIdentity = authenticationResponse.getIdentity();
+            String mappedIdentity = IdentityMappingUtil.mapIdentity(rawIdentity, IdentityMappingUtil.getIdentityMappings(properties));
+            long expiration = validateTokenExpiration(authenticationResponse.getExpiration(), mappedIdentity);
+
+            // create the authentication token
+            loginAuthenticationToken = new LoginAuthenticationToken(mappedIdentity, expiration, authenticationResponse.getIssuer());
+        } catch (final InvalidLoginCredentialsException ilce) {
+            throw new IllegalArgumentException("The supplied username and password are not valid.", ilce);
+        } catch (final IdentityAccessException iae) {
+            throw new AdministrationException(iae.getMessage(), iae);
+        }
+
+        // generate JWT for response
+        final String token = jwtService.generateSignedToken(loginAuthenticationToken);
+
+//        (String name,
+//                String value,
+//                String path,
+//                String domain,
+//                String comment,
+//        int maxAge,
+//        boolean secure)
+
+        // generate a cookie to store the JWT
+        final NewCookie cookie = new NewCookie("jwt-auth-cookie", token, "/", null, null, 43200,true, true);
+
+//        cookie.setPath("/");
+//        cookie.setHttpOnly(true);
+//        cookie.setMaxAge(60);
+//        cookie.setSecure(true);
+//        //  cookie.setDomain(); - should we set this? probably doesn't help defend CSRF (request source origin and target origin should however)
+//        httpServletResponse.addCookie(cookie);
+
+        // build the response
+        final URI uri = URI.create(generateResourceUri("access", "token"));
+        return generateCreatedResponse(uri, token).cookie(cookie).build();
     }
 
     @DELETE
@@ -1808,6 +1903,10 @@ public class AccessResource extends ApplicationResource {
 
     public void setLogoutRequestManager(LogoutRequestManager logoutRequestManager) {
         this.logoutRequestManager = logoutRequestManager;
+    }
+
+    public void getJwtFromRequest(HttpServletRequest httpServletRequest) {
+        httpServletRequest.getCookies()
     }
 
 }

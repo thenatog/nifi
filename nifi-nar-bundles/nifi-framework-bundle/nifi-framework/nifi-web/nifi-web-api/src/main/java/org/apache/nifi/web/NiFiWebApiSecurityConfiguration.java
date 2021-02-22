@@ -16,7 +16,6 @@
  */
 package org.apache.nifi.web;
 
-import java.util.Arrays;
 import org.apache.nifi.util.NiFiProperties;
 import org.apache.nifi.web.security.anonymous.NiFiAnonymousAuthenticationFilter;
 import org.apache.nifi.web.security.anonymous.NiFiAnonymousAuthenticationProvider;
@@ -49,6 +48,8 @@ import org.springframework.security.web.authentication.preauth.x509.X509Principa
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 /**
  * NiFi Web Api Spring security. Applies the various NiFiAuthenticationFilter servlet filters which will extract authentication
@@ -95,6 +96,7 @@ public class NiFiWebApiSecurityConfiguration extends WebSecurityConfigurerAdapte
                             "/access",
                             "/access/config",
                             "/access/token",
+                            "/access/token-cookie",
                             "/access/kerberos",
                             "/access/oidc/exchange",
                             "/access/oidc/callback",

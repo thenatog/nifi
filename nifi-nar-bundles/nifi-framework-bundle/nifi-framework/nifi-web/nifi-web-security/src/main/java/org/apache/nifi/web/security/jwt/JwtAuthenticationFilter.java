@@ -22,7 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +37,7 @@ public class JwtAuthenticationFilter extends NiFiAuthenticationFilter {
 
     // The Authorization header contains authentication credentials
     public static final String AUTHORIZATION = "Authorization";
+    public static final String COOKIE_NAME = "jwt-auth-cookie";
     private static final Pattern tokenPattern = Pattern.compile("^Bearer (\\S*\\.\\S*\\.\\S*)$");
 
     @Override
@@ -43,10 +47,22 @@ public class JwtAuthenticationFilter extends NiFiAuthenticationFilter {
             return null;
         }
 
+        // Check for JWT in cookie first
+        final Cookie[] cookies = request.getCookies();
+        if(cookies != null) {
+            Optional<Cookie> cookieJwt = Arrays.stream(cookies).filter(cookie -> cookie.getName().equals(COOKIE_NAME)).findFirst();
+
+            if (cookieJwt.isPresent()) {
+                String token = cookieJwt.get().getValue();
+                return new JwtAuthenticationRequestToken(token, request.getRemoteAddr());
+            }
+        }
+
         // TODO: Refactor request header extraction logic to shared utility as it is duplicated in AccessResource
 
         // get the principal out of the user token
         final String authorizationHeader = request.getHeader(AUTHORIZATION);
+
 
         // if there is no authorization header, we don't know the user
         if (authorizationHeader == null || !validJwtFormat(authorizationHeader)) {

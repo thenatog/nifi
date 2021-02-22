@@ -91,7 +91,7 @@
         });
 
         // shows the logout link in the message-pane when appropriate and schedule token refresh
-        if (nfStorage.getItem('jwt') !== null) {
+        if (nfStorage.getItem('loggedIn') !== null) {
             $('#user-logout-container').css('display', 'block');
             nfCommon.scheduleTokenRefresh();
         }
@@ -505,7 +505,7 @@
             var interval = nfCommon.MILLIS_PER_MINUTE;
 
             var checkExpiration = function () {
-                var expiration = nfStorage.getItemExpiration('jwt');
+                var expiration = nfStorage.getItemExpiration('loggedIn');
 
                 // ensure there is an expiration and token present
                 if (expiration !== null) {
@@ -853,7 +853,7 @@
          * Shows the logout link if appropriate.
          */
         showLogoutLink: function () {
-            if (nfStorage.getItem('jwt') === null) {
+            if (nfStorage.getItem('loggedIn') === null) {
                 $('#user-logout-container').css('display', 'none');
             } else {
                 $('#user-logout-container').css('display', 'block');

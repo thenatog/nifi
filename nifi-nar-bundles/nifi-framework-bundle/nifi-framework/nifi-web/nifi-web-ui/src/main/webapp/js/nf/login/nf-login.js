@@ -47,7 +47,7 @@
 
     var config = {
         urls: {
-            token: '../nifi-api/access/token',
+            token: '../nifi-api/access/token-cookie',
             accessStatus: '../nifi-api/access',
             accessConfig: '../nifi-api/access/config'
         }
@@ -98,11 +98,12 @@
                 'username': $('#username').val(),
                 'password': $('#password').val()
             }
-        }).done(function (jwt) {
+        }).done(function () {
             // get the payload and store the token with the appropirate expiration
-            var token = nfCommon.getJwtPayload(jwt);
-            var expiration = parseInt(token['exp'], 10) * nfCommon.MILLIS_PER_SECOND;
-            nfStorage.setItem('jwt', jwt, expiration);
+            //var token = nfCommon.getJwtPayload(jwt);
+            var expiration = 12 * nfCommon.MILLIS_PER_HOUR;
+            // TODO: Nathan remove this: nfStorage.setItem('jwt', jwt, expiration);
+            nfStorage.setItem('loggedIn', "Logged In", expiration)
 
             // check to see if they actually have access now
             $.ajax({
@@ -166,7 +167,7 @@
         init: function () {
             nfStorage.init();
 
-            if (nfStorage.getItem('jwt') !== null) {
+            if (nfStorage.getItem('loggedIn') !== null) {
                 showLogoutLink();
             }
 
