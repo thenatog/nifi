@@ -46,7 +46,6 @@ import org.apache.nifi.controller.serialization.FlowFromDOMFactory;
 import org.apache.nifi.encrypt.StringEncryptor;
 import org.apache.nifi.nar.ExtensionManager;
 import org.apache.nifi.properties.NiFiPropertiesLoader;
-import org.apache.nifi.security.util.crypto.Argon2SecureHasher;
 import org.apache.nifi.security.util.crypto.SecureHasher;
 import org.apache.nifi.security.util.crypto.SecureHasherFactory;
 import org.apache.nifi.security.xml.XmlUtils;

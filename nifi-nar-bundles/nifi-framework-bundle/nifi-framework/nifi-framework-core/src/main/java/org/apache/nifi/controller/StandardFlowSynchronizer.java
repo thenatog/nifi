@@ -79,7 +79,6 @@ import org.apache.nifi.remote.protocol.SiteToSiteTransportProtocol;
 import org.apache.nifi.reporting.Severity;
 import org.apache.nifi.scheduling.ExecutionNode;
 import org.apache.nifi.scheduling.SchedulingStrategy;
-import org.apache.nifi.security.util.crypto.SecureHasherFactory;
 import org.apache.nifi.services.FlowService;
 import org.apache.nifi.util.BundleUtils;
 import org.apache.nifi.util.DomUtils;
