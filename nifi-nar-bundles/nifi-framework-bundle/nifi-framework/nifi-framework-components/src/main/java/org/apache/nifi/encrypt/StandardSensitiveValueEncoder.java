@@ -37,8 +37,8 @@ public class StandardSensitiveValueEncoder implements SensitiveValueEncoder {
 
     private static final Logger logger = LoggerFactory.getLogger(StandardSensitiveValueEncoder.class);
 
-    private byte[] hashedSensitivePropertyKey;
-    private String HMAC_SHA256 = "HmacSHA256";
+    private SecretKeySpec secretKeySpec;
+    private static final String HMAC_SHA256 = "HmacSHA256";
 
     public StandardSensitiveValueEncoder(final NiFiProperties properties) {
         this(properties.getProperty(NiFiProperties.SENSITIVE_PROPS_KEY),
@@ -49,7 +49,8 @@ public class StandardSensitiveValueEncoder implements SensitiveValueEncoder {
     public StandardSensitiveValueEncoder(final String sensitivePropertiesKey, final SecureHasher hasher) {
         Objects.requireNonNull(sensitivePropertiesKey, "Sensitive Properties Key is required");
         Objects.requireNonNull(hasher, "SecureHasher is required");
-        hashedSensitivePropertyKey = hasher.hashRaw(sensitivePropertiesKey.getBytes(StandardCharsets.UTF_8));
+        byte[] hashedSensitivePropertyKey = hasher.hashRaw(sensitivePropertiesKey.getBytes(StandardCharsets.UTF_8));
+        secretKeySpec = new SecretKeySpec(hashedSensitivePropertyKey, HMAC_SHA256);
     }
 
     /**
@@ -65,7 +66,7 @@ public class StandardSensitiveValueEncoder implements SensitiveValueEncoder {
     public String getEncoded(final String plaintextSensitivePropertyValue) {
         try {
             Mac mac = Mac.getInstance(HMAC_SHA256);
-            mac.init(new SecretKeySpec(hashedSensitivePropertyKey, "HmacSHA256"));
+            mac.init(secretKeySpec);
             byte[] hashedBytes = mac.doFinal(plaintextSensitivePropertyValue.getBytes(StandardCharsets.UTF_8));
             return "[MASKED] (" + Base64.getEncoder().encodeToString(hashedBytes) + ")";
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {

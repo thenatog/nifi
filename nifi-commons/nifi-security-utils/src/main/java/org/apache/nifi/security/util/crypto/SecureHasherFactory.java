@@ -42,14 +42,6 @@ public class SecureHasherFactory {
         registeredSecureHashers.put(KeyDerivationFunction.ARGON2, Argon2SecureHasher.class);
     }
 
-    public static SecureHasher getSecureHasher() {
-        return getSecureHasher(DEFAULT_HASHER);
-    }
-
-    public static SecureHasher getSecureHasher(final KeyDerivationFunction kdf) {
-        return getSecureHasher(kdf.getKdfName());
-    }
-
     public static SecureHasher getSecureHasher(final String algorithm) {
         String hasherAlgorithm = algorithm;
 
